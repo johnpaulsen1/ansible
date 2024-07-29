@@ -1,0 +1,9 @@
+- name: "results"
+  debug:
+    msg: "host: '{{ inventory_hostname }}', splunk_managed: '{{ splunk_managed }}', splunk_self_managed: '{{ splunk_self_managed }}', splunk_installed: '{{ splunk_installed_fact }}', splunk_latest_installed: '{{ splunk_latest_installed_fact }}', splunk_running: '{{ splunk_running_fact }}', splunk_handshake: '{{ splunk_handshake_fact }}', splunk_instance_file: '{{ splunk_instance_file_fact }}', splunk_systemd_service_file: '{{ check_splunk_systemd_service_file_fact }}', splunk_initd_service_file: '{{ check_splunk_initd_service_file_fact }}', splunk_varlog_acl_access: '{{ splunk_varlog_acl_access_fact }}', splunk_varlog_messages_acl_access: '{{ splunk_varlog_messages_acl_access_fact }}', splunk_varlog_secure_acl_access: '{{ splunk_varlog_secure_acl_access_fact }}', os_logs_populated: '{{ os_logs_populated_fact }}', frg_all_deploymentclient_dir_exists: '{{ frg_all_deploymentclient_dir_exists_fact }}'"
+  when: splunk_managed
+
+- name: "results"
+  debug:
+    msg: "host: '{{ inventory_hostname }}', splunk_managed: '{{ splunk_managed }}', splunk_self_managed: '{{ splunk_self_managed }}', splunk_running: '{{ splunk_running_fact }}', splunk_varlog_messages_acl_access: '{{ splunk_varlog_messages_acl_access_fact }}', splunk_varlog_secure_acl_access: '{{ splunk_varlog_secure_acl_access_fact }}'"
+  when: splunk_self_managed

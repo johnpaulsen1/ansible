@@ -1,0 +1,55 @@
+netbackup_packages:
+  - VRTSnbjre
+  - VRTSnbpck
+  - VRTSnbclt
+  - VRTSnbjava
+  - VRTSnbcfg
+  - VRTSpbx
+  - VRTSpddea
+
+netbackup_dirs:
+  - "{{ install_base }}"
+  - "{{ install_dir }}"
+  - "{{ download_dir }}"
+
+netbackup_dirs_clean:
+  - "{{ install_base }}"
+  - /usr/openv
+
+netbackup_files_clean:
+  - /tmp/NBInstallAnswer.conf
+  - /usr/local/bin/install-netbackup.py
+
+netbackup_exclude_list:
+  - /proc
+  - /sys
+
+lan_authorization_token: xxx
+lan_ca_certificate_fingerprint: fi:ng:er:pr:in:t1
+lan_vip: lan_vip_here
+
+dmz_authorization_token: yyy
+dmz_ca_certificate_fingerprint: fi:ng:er:pr:in:t2
+dmz_vip: dmz_vip_here
+
+pci_authorization_token: zzz
+pci_ca_certificate_fingerprint: fi:ng:er:pr:in:t3
+pci_vip: pci_vip_here
+
+client_name: "{{ ansible_fqdn }}"
+db_script_path: /home/oracle/scripts
+
+lan_servers:
+  - lan_server1
+  - lan_server2
+  - lan_server3
+
+dmz_servers:
+  - dmz_server1
+  - dmz_server2
+  - dmz_server3
+
+pci_servers:
+  - pci_server1
+  - pci_server2
+  - pci_server3

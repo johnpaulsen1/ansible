@@ -1,0 +1,106 @@
+---
+### verify the gathered facts ####
+### RHEL ####
+- name: verify registration command - rhel physical
+  shell: echo "activationkey = fnb_rhel"{{ ansible_distribution_major_version }}"_physical will be used"
+  when:
+    - ansible_virtualization_type == "physical"
+    - ansible_distribution == "RedHat"
+    
+
+- name: verify registration command - rhel virtual
+  shell: echo "activationkey = fnb_rhel"{{ ansible_distribution_major_version }}" will be used"
+  when:
+    - ansible_virtualization_type == "VMware"
+    - ansible_distribution == "RedHat"
+      
+- name: verify registration command - rhel virtualbox
+  shell: echo "activationkey = fnb_rhel"{{ ansible_distribution_major_version }}" will be used"
+  when:
+    - ansible_virtualization_type == "virtualbox"
+    - ansible_distribution == "RedHat"
+
+- name: verify registration command - rhel physical
+  shell: echo "activationkey = fnb_rhel"{{ ansible_distribution_major_version }}"_physical will be used"
+  when:
+    - ansible_virtualization_type == "physical"
+    - ansible_distribution == "RedHat"
+
+- name: verify registration command - rhel physical
+  shell: echo "activationkey = fnbz"{{ ansible_distribution_major_version }}" will be used"
+  when:
+    - ansible_architecture == "s390x"
+    
+### CentOS
+- name: verify registration command - rhel virtual
+  shell: echo "activationkey = fnb_centos"{{ ansible_distribution_major_version }}" will be used"
+  when:
+    - ansible_virtualization_type == "VMware"
+    - ansible_distribution == "CentOS"
+
+- name: verify registration command - rhel physical
+  shell: echo "activationkey = fnb_centos"{{ ansible_distribution_major_version }}_physical" will be used"
+  when:
+    - ansible_virtualization_type == "physical"
+    - ansible_distribution == "CentOS"
+
+- name: verify registration command - zlinux 7
+  shell: echo "activationkey= fnbz{{ ansible_distribution_major_version }} will be used"
+  when:
+    - ansible_distribution == "RedHat" 
+    - ansible_virtualization_type == "zlinux"
+
+# prep
+
+- name: download katello-ca-consumer
+  get_url:
+    url: "https://{{ item }}/pub/katello-ca-consumer-latest.noarch.rpm"
+    dest: /tmp/katello-ca-consumer-latest.noarch.rpm
+    validate_certs: no
+  with_items:
+    - "{{ subscription_host }}"
+
+- name: install new katello-ca-consumer
+  yum:
+    name: /tmp/katello-ca-consumer-latest.noarch.rpm
+    state: present
+  
+- name: remove proxy
+  lineinfile:
+    path: /etc/rhsm/rhsm.conf
+    regexp: '-cobbler'
+    state: absent
+
+- name: remove yum proxy
+  lineinfile:
+    path: /etc/yum.conf
+    regexp: '-cobbler'
+    state: absent
+
+- name: find repo files
+  find:
+   paths: /etc/yum.repos.d/
+   patterns: '*.repo'
+  register: files_to_delete
+
+- name: clean repo files
+  file:
+    path: "{{ item.path }}"
+    state: absent
+  with_items:
+    - "{{ files_to_delete.files }}"
+
+
+- name: clean repos
+  shell: yum clean all
+  ignore_errors: yes
+
+- name: clean cache
+  file:
+    state: absent
+    path: "{{ item }}"
+  with_items:
+     - /var/cache/yum/
+
+- name: register
+  include: register.yaml

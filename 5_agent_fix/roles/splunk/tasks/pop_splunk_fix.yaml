@@ -1,0 +1,198 @@
+- name: "check if /opt/popsplunk/splunkforwarder dir is present"
+  stat:
+    path: "/opt/popsplunk/splunkforwarder"
+  register: popsplunk_splunk
+  ignore_errors: true
+  changed_when: false
+
+- name: set vars - popsplunk
+  set_fact:
+    bu_splunk_base_dir: "/opt/popsplunk/splunkforwarder"
+    splunk_user: "popsplunk"
+  when: popsplunk_splunk.stat.exists
+
+- name: "check if I&SS splunk is install dir is present"
+  stat:
+    path: "{{ iss_splunk_base_dir }}"
+  register: iss_splunk_path
+  ignore_errors: true
+  changed_when: false
+
+- name: "check if pop splunk is running"
+  shell: "{{ bu_splunk_base_dir }}/bin/splunk status"
+  register: pop_splunk_running
+  ignore_errors: true
+  changed_when: false
+
+- name: "check if splunk systemd service file exists - 7"
+  stat:
+    path: "{{ splunk_systemd_service_file }}"
+  register: check_splunk_systemd_service_file
+  when: ansible_distribution_major_version >= '7'
+  ignore_errors: true
+  changed_when: false
+
+- name: "check pop splunk user defined in systemd service file - 7"
+  shell: "grep User={{ splunk_user }} {{ splunk_systemd_service_file }}"
+  register: pop_splunk_systemd_file
+  when: ansible_distribution_major_version >= '7' and check_splunk_systemd_service_file.stat.exists
+  ignore_errors: true
+  changed_when: false
+
+- name: "check if splunk init.d service file exists - 6"
+  stat:
+    path: "{{ splunk_initd_service_file }}"
+  register: check_splunk_initd_service_file
+  when: ansible_distribution_major_version == '6'
+  ignore_errors: true
+  changed_when: false
+
+- name: "check pop splunk base dir defined in initd service file - 6"
+  shell: "grep {{ bu_splunk_base_dir }} {{ splunk_initd_service_file }}"
+  register: pop_splunk_initd_file
+  when: ansible_distribution_major_version == '6' and check_splunk_initd_service_file.stat.exists
+  ignore_errors: true
+  changed_when: false
+
+- name: "kill splunk if running"
+  shell: "pkill -9 -f splunk"
+  register: kill_splunk
+  when: iss_splunk_path.stat.exists or pop_splunk_running is failed
+  ignore_errors: true
+
+- name: "disable boot-start - 7"
+  shell: "{{ iss_splunk_base_dir }}/bin/splunk disable boot-start"
+  register: disable_boot
+  when: ansible_distribution_major_version >= '7' and (iss_splunk_path.stat.exists or pop_splunk_running is failed or pop_splunk_systemd_file is failed or not check_splunk_systemd_service_file.stat.exists)
+  ignore_errors: true
+
+- name: "disable boot-start - 6"
+  shell: "{{ iss_splunk_base_dir }}/bin/splunk disable boot-start"
+  register: disable_boot
+  when: ansible_distribution_major_version == '6' and (iss_splunk_path.stat.exists or pop_splunk_running is failed or pop_splunk_initd_file is failed or not check_splunk_initd_service_file.stat.exists)
+  ignore_errors: true
+
+- name: remove I&SS SplunkForwarder service symlink - 7
+  file:
+    path: "/etc/systemd/system/multi-user.target.wants/SplunkForwarder.service"
+    state: absent
+  ignore_errors: true
+  when: ansible_distribution_major_version >= '7' and (iss_splunk_path.stat.exists or pop_splunk_running is failed or pop_splunk_systemd_file is failed or not check_splunk_systemd_service_file.stat.exists)
+
+- name: remove I&SS SplunkForwarder service file - 7
+  file:
+    path: "/etc/systemd/system/SplunkForwarder.service"
+    state: absent
+  ignore_errors: true
+  when: ansible_distribution_major_version >= '7' and (iss_splunk_path.stat.exists or pop_splunk_running is failed or pop_splunk_systemd_file is failed or not check_splunk_systemd_service_file.stat.exists)
+
+- name: remove I&SS SplunkForwarder service file - 6
+  file:
+    path: "/etc/init.d/splunk"
+    state: absent
+  ignore_errors: true
+  when: ansible_distribution_major_version == '6' and (iss_splunk_path.stat.exists or pop_splunk_running is failed or pop_splunk_initd_file is failed or not check_splunk_initd_service_file.stat.exists)
+
+- name: remove I&SS splunk install
+  yum:
+    name: "splunkforwarder"
+    state: absent
+  when: iss_splunk_path.stat.exists
+  ignore_errors: true
+
+- name: remove I&SS splunkforwarder directory
+  file:
+    path: "{{ iss_splunk_base_dir }}"
+    state: absent
+  when: iss_splunk_path.stat.exists
+  ignore_errors: true
+
+- name: set POP OS ACLs
+  acl:
+    path: "{{ item }}"
+    entry: "user:{{ splunk_user }}:r-x"
+    state: present
+  with_items:
+    - "/var/log"
+    - "/var/log/messages"
+    - "/var/log/secure"
+    - "/var/log/audit/"
+    - "/var/log/audit/audit.log"
+    - "/var/log/ppp"
+    - "/var/log/puppet"
+    - "/var/log/samba"
+    - "/var/log/sssd"
+    - "/var/log/sudo-io"
+  ignore_errors: true
+
+### Add polkit for authentication
+- name: POP polkit file
+  copy:
+    src: "pop_{{ bu_server_type }}_90-splunk.rules"
+    dest: /etc/polkit-1/rules.d/90-splunk.rules
+    owner: root
+    group: root
+    mode: '0644'
+  when: (ansible_distribution == 'RedHat' or ansible_distribution == 'CentOS') and (ansible_distribution_major_version >= '7')
+
+- name: POP polkit script
+  copy:
+    src: pop_polkit_splunk
+    dest: /usr/local/bin/polkit_splunk
+    owner: root
+    group: root
+    mode: '0755'
+  when: (ansible_distribution == 'RedHat' or ansible_distribution == 'CentOS') and (ansible_distribution_major_version >= '7')
+
+- name: change dir ownership
+  file:
+    path: "{{ bu_splunk_base_dir }}"
+    owner: "{{ splunk_user }}"
+    group: "{{ splunk_user }}"
+    mode: '0775'
+    recurse: yes
+
+- name: "stop POP splunk to create init script - 7"
+  shell: "{{ bu_splunk_base_dir }}/bin/splunk stop"
+  ignore_errors: true
+  when: ansible_distribution_major_version >= '7' and (iss_splunk_path.stat.exists or pop_splunk_systemd_file is failed or not check_splunk_systemd_service_file.stat.exists)
+
+- name: "stop POP splunk to create init script - 6"
+  shell: "{{ bu_splunk_base_dir }}/bin/splunk stop"
+  ignore_errors: true
+  when: ansible_distribution_major_version == '6' and (iss_splunk_path.stat.exists or pop_splunk_initd_file is failed or not check_splunk_initd_service_file.stat.exists)
+
+# rhel / centos 7/8
+- name: "enable POP splunk boot start - 7"
+  shell: "{{ bu_splunk_base_dir }}/bin/splunk enable boot-start --accept-license --answer-yes --no-prompt -systemd-managed 1 -user {{ splunk_user }}"
+  ignore_errors: true
+  when: ansible_distribution_major_version >= '7' and (iss_splunk_path.stat.exists or pop_splunk_running is failed or pop_splunk_systemd_file is failed or not check_splunk_systemd_service_file.stat.exists)
+
+- name: reload daemon - 7
+  shell: systemctl daemon-reload
+  ignore_errors: true
+  when: ansible_distribution_major_version >= '7' and (iss_splunk_path.stat.exists or pop_splunk_running is failed or pop_splunk_systemd_file is failed or not check_splunk_systemd_service_file.stat.exists)
+
+- name: "start POP splunk service - 7"
+  systemd:
+    state: started
+    name: SplunkForwarder
+  register: start_splunk_7
+  when: ansible_distribution_major_version >= '7' and (iss_splunk_path.stat.exists or pop_splunk_running is failed or pop_splunk_systemd_file is failed or not check_splunk_systemd_service_file.stat.exists)
+# rhel / centos 6
+- name: "enable POP splunk boot start - 6"
+  shell: "{{ bu_splunk_base_dir }}/bin/splunk enable boot-start --accept-license --answer-yes --no-prompt -user {{ splunk_user }}"
+  register: enable_boot_6
+  ignore_errors: true
+  when: ansible_distribution_major_version == '6' and (iss_splunk_path.stat.exists or pop_splunk_running is failed or pop_splunk_initd_file is failed or not check_splunk_initd_service_file.stat.exists)
+
+- name: "enable POP splunk service to auto start on reboot - 6"
+  service:
+    name: splunk
+    enabled: yes
+  ignore_errors: true
+  when: ansible_distribution_major_version == '6' and (iss_splunk_path.stat.exists or pop_splunk_running is failed or pop_splunk_initd_file is failed or not check_splunk_initd_service_file.stat.exists)
+
+- name: "start POP splunk service - 6"
+  shell: "{{ bu_splunk_base_dir }}/bin/splunk start"
+  when: ansible_distribution_major_version == '6' and (iss_splunk_path.stat.exists or pop_splunk_running is failed or pop_splunk_initd_file is failed or not check_splunk_initd_service_file.stat.exists)

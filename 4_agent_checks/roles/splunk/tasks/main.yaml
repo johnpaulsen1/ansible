@@ -1,0 +1,7 @@
+- name: check managed splunk installation
+  include: check_managed_install.yaml
+  when: splunk_managed
+
+- name: check unmanaged splunk installation
+  include: check_unmanaged_install.yaml
+  when: splunk_self_managed

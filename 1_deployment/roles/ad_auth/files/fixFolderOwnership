@@ -1,0 +1,40 @@
+#!/bin/bash
+
+# Author: Jonathan van der Watt (jonathan.vanderwatt@fnb.co.za)
+# Purpose: Best effort script to fix uids and gids in /home and /opt
+
+# Source the functions library
+
+fixFolderOwnership()
+{
+  # Build array of users to fix
+  users=($(ls -l /home/ | awk '/f/ {print $NF}'; ls -l /opt/ | awk '/f/ {print $NF}'))
+
+  if [ ${#users[@]} -eq 0 ]
+  then
+    logger INFO "No users to fix."
+    exit 0
+  else
+    for user in ${users[@]}
+    do
+      uid=$user
+      gid=$(id $user | awk '{print $2}' | cut -d"(" -f1 | awk -F"=" '{print $2}')
+
+      if [ ! -z $uid ] && [ ! -z $gid ]
+      then
+        logger INFO "Fixing ownership for $user."
+        chown -R $uid:$gid /home/$user; chown -R $uid:$gid /opt/$user
+        retval=$?
+      else
+        logger ERROR "No uid/gid for $user."
+      fi
+    done
+  fi
+
+  if [ $retval == 0 ]
+  then
+    touch /tmp/fixed
+  fi
+}
+
+fixFolderOwnership

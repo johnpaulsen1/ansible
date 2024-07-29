@@ -1,0 +1,12 @@
+sssd_packages:
+  - sssd
+  - oddjob
+  - oddjob-mkhomedir
+  - pam_krb5
+  - fprintd-pam
+
+s390x_sssd_packages:
+  - sssd
+  - oddjob
+  - oddjob-mkhomedir
+  - pam_krb5

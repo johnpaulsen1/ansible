@@ -1,0 +1,29 @@
+---
+- name: "Gather facts about a Server Profile by name"
+  hpe.oneview.oneview_server_profile_facts:
+    config: "{{ oneview_config_file }}"
+    name: "{{ item }}"
+  loop: "{{ cci_hpe_servers[cci_cluster] }}"
+  register: server_profiles_result
+  delegate_to: localhost
+  when:
+    - oneview_config_file is defined
+    - cci_hpe_servers is defined
+
+- name: "Set URI dictionary fact"
+  set_fact:
+    server_profile_uri_dict: "{{ server_profile_uri_dict | default({}) | combine( {item.ansible_facts.server_profiles[0].name: item.ansible_facts.server_profiles[0].uri} ) }}"
+    server_profile_uri_dict_new: "{{ server_profile_uri_dict_new | default({}) | combine( {'name': item.ansible_facts.server_profiles[0].name, 'value': item.ansible_facts.server_profiles[0].uri} ) }}"
+  loop: "{{ server_profiles_result.results }}"
+  when:
+    - server_profiles is defined
+    - server_profile_uri_dict_new is defined
+
+- name: "Print - Server Profile Uri Dictionary"
+  debug:
+    msg:
+      - "{{ server_profile_uri_dict }}"
+      - "{{ server_profile_uri_dict_new }}"
+  when:
+    - server_profile_uri_dict is defined
+    - server_profile_uri_dict_new is defined

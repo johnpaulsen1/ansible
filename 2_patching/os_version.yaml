@@ -1,0 +1,22 @@
+---
+- hosts: "{{ hosts | default('all') }}"
+  user: "{{ user }}"
+  become: true
+  become_user: root
+  gather_facts: false
+  ignore_errors: true
+  serial: 20
+  vars:
+    prod: false
+    nonprod: false
+
+  tasks:
+    - name: gather some factibles
+      setup:
+        gather_subset:
+          - 'min'
+
+    - name: os_version
+      debug:
+        msg: "{{ ansible_fqdn }}: {{ ansible_distribution_version }} {{ ansible_architecture }}"
+

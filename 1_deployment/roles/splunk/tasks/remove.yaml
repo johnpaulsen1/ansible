@@ -1,0 +1,46 @@
+---
+- name: kill splunk if running
+  shell: "pkill -9 -f splunk"
+  register: killed_splunk
+  ignore_errors: true
+  when: splunk_running == true
+
+- name: remove splunkforwarder package
+  yum:
+    name: splunkforwarder
+    state: absent
+  register: uninstall_splunk
+  ignore_errors: true
+
+- set_fact:
+    splunk_uninstalled: true
+  when:
+    - uninstall_splunk is success
+
+- name: remove SplunkForwarder service symlink - 7
+  file:
+    path: "/etc/systemd/system/multi-user.target.wants/SplunkForwarder.service"
+    state: absent
+  ignore_errors: true
+  when: splunk_uninstalled == true and ansible_distribution_major_version != '6'
+
+- name: remove SplunkForwarder service file - 7
+  file:
+    path: "/etc/systemd/system/SplunkForwarder.service"
+    state: absent
+  ignore_errors: true
+  when: splunk_uninstalled == true ansible_distribution_major_version != '6'
+
+- name: remove SplunkForwarder service file - 6
+  file:
+    path: "/etc/init.d/splunk"
+    state: absent
+  ignore_errors: true
+  when: splunk_uninstalled == true ansible_distribution_major_version == '6'
+
+- name: remove SplunkForwarder opt dir
+  file:
+    path: "/opt/splunkforwarder"
+    state: absent
+  ignore_errors: true
+  when: splunk_uninstalled == true

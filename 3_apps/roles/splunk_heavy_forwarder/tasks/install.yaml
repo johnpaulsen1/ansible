@@ -1,0 +1,70 @@
+---
+- name: "stop splunkd if it's running"
+  shell: "/opt/splunk/bin/splunk stop"
+  ignore_errors: true
+
+- name: "stop splunkd if it's running - extra sure"
+  shell: "pkill -9 -f splunk"
+  ignore_errors: true
+
+- name: "disable splunkd service if enabled"
+  shell: "/opt/splunk/bin/splunk disable boot-start --accept-license --answer-yes --no-prompt -systemd-managed 1 -user splunk"
+  ignore_errors: true
+
+- name: "clean up splunk dir if there"
+  file:
+    path: /opt/splunk
+    state: absent
+  ignore_errors: true
+
+- name: "download splunk heavy forwarder install"
+  get_url:
+    url: "{{ splunk_url }}/{{ splunk_heavy_forwarder_install }}"
+    dest: "/opt/{{ splunk_heavy_forwarder_install }}"
+    mode: '0700'
+    validate_certs: 'no'
+  register: splunk_download
+
+- name: "uncompress splunk heavy forwarder install archive"
+  unarchive:
+    src: "/opt/{{ splunk_heavy_forwarder_install }}"
+    dest: /opt/
+    remote_src: yes
+  register: splunk_uncompress
+  when: splunk_download is success
+
+- name: "get seed-file.conf"
+  get_url:
+    url: "{{ splunk_url }}/seed-file.conf"
+    dest: /opt/splunk/etc/system/local/user-seed.conf
+    mode: '0644'
+    validate_certs: 'no'
+  register: splunk_seed_file
+
+- name: "change dir ownership"
+  file:
+    path: /opt/splunk/
+    owner: splunk
+    group: splunk
+    mode: '0775'
+    recurse: yes
+
+- name: "enable splunk service"
+  shell: "/opt/splunk/bin/splunk enable boot-start --accept-license --answer-yes --no-prompt -systemd-managed 1 -user splunk"
+  register: enable_splunk
+
+- name: "cleanup install file/s"
+  file:
+    path: "/opt/{{ splunk_heavy_forwarder_install }}"
+    state: absent
+  when: enable_splunk is success
+
+- name: "systemd daemon-reload"
+  systemd:
+    daemon_reload: yes
+
+- name: "restart splunkd service"
+  systemd:
+    name: Splunkd
+    state: restarted
+  when: enable_splunk is success

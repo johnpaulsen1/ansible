@@ -1,0 +1,53 @@
+- name: set vlan fact - pci
+  shell: "for ip in {{ pci_ips }} ; do echo {{ ansible_default_ipv4.address }} |grep -q $ip ; if [[ $? == 0 ]] ; then ip_found=true ; exit 0 ; else ip_found=false ; fi ; done; if [[ ip_found -eq false ]] ; then exit 1 ; fi"
+  register: pci_vlan_check
+  when: lan_vlan_set == false and dmz_vlan_set == false
+  ignore_errors: true
+  changed_when: false
+
+- name: set vlan fact post check - pci
+  set_fact:
+    pci_vlan_set: true
+    vlan: "pci"
+    cacheable: yes
+  when: pci_vlan_check is success and lan_vlan_set == false and dmz_vlan_set == false
+
+- name: set vlan fact - dmz
+  shell: "for ip in {{ dmz_ips }} ; do echo {{ ansible_default_ipv4.address }} |grep -q $ip ; if [[ $? == 0 ]] ; then ip_found=true ; exit 0 ; else ip_found=false ; fi ; done; if [[ ip_found -eq false ]] ; then exit 1 ; fi"
+  register: dmz_vlan_check
+  when: pci_vlan_set == false and lan_vlan_set == false
+  ignore_errors: true
+  changed_when: false
+
+- name: set vlan fact post check - dmz
+  set_fact:
+    dmz_vlan_set: true
+    vlan: "dmz"
+    cacheable: yes
+  when: dmz_vlan_check is success and pci_vlan_set == false and lan_vlan_set == false
+
+- name: set vlan fact - lan
+  shell: "for ip in {{ lan_ips }} ; do echo {{ ansible_default_ipv4.address }} |grep -q $ip ; if [[ $? == 0 ]] ; then ip_found=true ; exit 0 ; else ip_found=false ; fi ; done; if [[ ip_found -eq false ]] ; then exit 1 ; fi"
+  register: lan_vlan_check
+  when: pci_vlan_set == false and dmz_vlan_set == false
+  ignore_errors: true
+  changed_when: false
+
+- name: set vlan fact post check - lan
+  set_fact:
+    lan_vlan_set: true
+    vlan: "lan"
+    cacheable: yes
+  when: lan_vlan_check is success and pci_vlan_set == false and dmz_vlan_set == false
+
+- debug:
+    msg: "Server in LAN"
+  when: vlan == "lan"
+
+- debug:
+    msg: "Server in DMZ"
+  when: vlan == "dmz"
+
+- debug:
+    msg: "Server in PCI"
+  when: vlan == "pci"

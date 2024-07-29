@@ -1,0 +1,119 @@
+---
+- name: "Set ilo_server_names_list param - default"
+  set_fact:
+    ilo_server_names_list: "{{ cci_hpe_servers[cci_cluster].keys() }}"
+  when: hardware_status_task_server_names is not defined
+
+- name: "Set ilo_server_names_list param - from status task"
+  set_fact:
+    ilo_server_names_list: "{{ hardware_status_task_server_names }}"
+  when: hardware_status_task_server_names is defined
+
+- name: "Set ilo credentials dictionary"
+  include_tasks: set_ilo_credentials_dict.yaml
+  vars:
+    ilo_creds_server_names: "{{ ilo_server_names_list }}"
+
+- name: "RedFish Community modules task block"
+  block:
+    - name: "Create iLO session"
+      community.general.redfish_command:
+        category: Sessions
+        command: CreateSession
+        baseuri: "{{ cci_hpe_servers[cci_cluster][item].ilo_address }}"
+        username: "{{ ilo_creds_dict[item].user }}"
+        password: "{{ ilo_creds_dict[item].password }}"
+      register: ilo_session
+      loop: "{{ ilo_server_names_list }}"
+      when:
+        - ilo_creds_dict is defined
+        - ilo_server_names_list is defined
+
+    - name: "Get iLO Systems information for cluster - {{ cci_cluster }}"
+      community.general.redfish_info:
+        category: Systems
+        baseuri: "{{ cci_hpe_servers[cci_cluster][item.item].ilo_address }}"
+        auth_token: "{{ item.session.token }}"
+      loop: "{{ ilo_session.results }}"
+      register: ilo_systems_info
+      when:
+        - ilo_session is success
+
+    - name: "Print the HostName (Server Name in OneView) obtained by the get iLO Systems information task"
+      debug:
+        msg: "{{ item.redfish_facts.system.entries[0][1].HostName }}"
+      loop: "{{ ilo_systems_info.results }}"
+      when:
+        - ilo_systems_info is success
+
+    - name: "Delete iLO session"
+      community.general.redfish_command:
+        category: Sessions
+        command: DeleteSession
+        baseuri: "{{ cci_hpe_servers[cci_cluster][item.item].ilo_address }}"
+        auth_token: "{{ item.session.token }}"
+        session_uri: "{{ item.session.uri }}"
+      loop: "{{ ilo_session.results }}"
+      when:
+        - ilo_session is success
+
+  rescue:
+    - name: "Delete iLO session"
+      community.general.redfish_command:
+        category: Sessions
+        command: DeleteSession
+        baseuri: "{{ cci_hpe_servers[cci_cluster][item.item].ilo_address }}"
+        auth_token: "{{ item.session.token }}"
+        session_uri: "{{ item.session.uri }}"
+      loop: "{{ ilo_session.results }}"
+      when:
+        - ilo_session is success
+
+- name: "Get the iLO HostName (Host Name in OneView) for cluster - {{ cci_cluster }}"
+  hpe.ilo.ilo_manage:
+    category: Manager
+    command: GetHostName
+    baseuri: "{{ cci_hpe_servers[cci_cluster][item].ilo_address }}"
+    username: "{{ ilo_creds_dict[item].user }}"
+    password: "{{ ilo_creds_dict[item].password }}"
+  register: get_ilo_hostname_result
+  loop: "{{ ilo_server_names_list }}"
+
+- name: "Print the results of the get iLO HostName (Host Name in OneView) task"
+  debug:
+    msg: "{{ item.ilo_manage.GetHostName.msg }}"
+  loop: "{{ get_ilo_hostname_result.results }}"
+  when:
+    - get_ilo_hostname_result is success
+    - item.ilo_manage.GetHostName.msg is defined
+
+- name: "Set list of servers param that need their iLO hostname (Server Name in OneView) set"
+  set_fact:
+    set_ilo_hostname_servers_list: "{{ set_ilo_hostname_servers_list | default([]) + [item.item.item | string] }}"
+  loop: "{{ ilo_systems_info.results }}"
+  when:
+    - ilo_systems_info is success
+    - "item.item.item != item.redfish_facts.system.entries[0][1].HostName"
+
+- name: "Set / Append to list of servers param that need their iLO hostname (Host Name in OneView) set"
+  set_fact:
+    set_ilo_hostname_servers_list: "{{ set_ilo_hostname_servers_list | default([]) + [item.item | string] }}"
+  loop: "{{ get_ilo_hostname_result.results }}"
+  when:
+    - get_ilo_hostname_result is success
+    - item.item not in item.ilo_manage.GetHostName.msg
+
+- name: "Server/s that need their iLO hostname updated / set"
+  debug:
+    msg: "Server - {{ item }}"
+  loop: "{{ set_ilo_hostname_servers_list }}"
+  when:
+    - set_ilo_hostname_servers_list is defined
+
+- name: "Set iLO hostname if needed"
+  include_tasks: set_ilo_hostname.yaml
+  vars:
+    ilo_hostname_server_names_list_ilo_task: "{{ set_ilo_hostname_servers_list }}"
+  when:
+    - set_ilo_hostname_servers_list is defined
+    - update_ilo_hostnames

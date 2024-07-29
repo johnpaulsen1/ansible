@@ -1,0 +1,7 @@
+
+flexera_port_open: "{{ flexera_check }}"
+flexera_lan: https://proxy_server_lan_here/cobbler/pub/software/flexera/latest/managesoft-17.0.1-1.x86_64.rpm
+flexera_dmz: https://proxy_server_dmz_here/cobbler/pub/software/flexera/latest/managesoft-17.0.1-1.x86_64.rpm
+flexera_lan_response: https://proxy_server_lan_here/cobbler/pub/software/flexera/latest/mgsft_rollout_response_lan
+flexera_dmz_response: https://proxy_server_dmz_here/cobbler/pub/software/flexera/latest/mgsft_rollout_response_dmz
+flexera_latest_version: "managesoft-17.0.1-1.x86_64"

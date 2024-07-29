@@ -1,0 +1,59 @@
+install check_mk
+- zlinux - check_mk-agent
+- x86_64 - check-mk-agent
+- xinetd
+- check_mk-agent-logwatch
+
+checkmk::mrpe::ipconntrack: 'enabled'
+checkmk::mrpe::netbackup:   'enabled'
+checkmk::mrpe::zombie:      'enabled'
+
+templates:
+/etc/check_mk/mrpe.cfg:
+
+Netbackup_port_13724 /usr/lib64/nagios/plugins/check_tcp -H 10.33.8.123 -p 13724
+Netbackup_port_13782 /usr/lib64/nagios/plugins/check_tcp -H 10.33.8.123 -p 13782
+Total_zombie_Processes /usr/lib64/nagios/plugins/check_procs -w 5 -c 10 -s Z
+ip_conntrack /usr/lib64/nagios/plugins/check_ip_conntrack
+
+/etc/check-mk-agent/mrpe.cfg:
+Netbackup_port_13724 /usr/lib64/nagios/plugins/check_tcp -H 10.33.8.123 -p 13724
+Netbackup_port_13782 /usr/lib64/nagios/plugins/check_tcp -H 10.33.8.123 -p 13782
+Total_zombie_Processes /usr/lib64/nagios/plugins/check_procs -w 5 -c 10 -s Z
+ip_conntrack /usr/lib64/nagios/plugins/check_ip_conntrack
+
+/etc/xinetd.d/check_mk:
+service check_mk
+{
+        port            = 6556
+        disable         = no
+        socket_type     = stream
+        protocol        = tcp
+        wait            = no
+        user            = root
+        group           = root
+        groups          = yes
+        server          = /usr/bin/check_mk_caching_agent
+        type            = UNLISTED
+        only_from       = 127.0.0.1 10.33.12.0/24 10.43.230.0/24 10.33.135.0/24 172.22.1.38 172.22.1.37 10.33.205.200 10.33.205.201 10.33.205.202 10.33.205.203
+        log_on_success += 
+}
+    owner   => 'root',
+    group   => 'root',
+    mode    => '0444',
+
+
+
+add firewall rules
+
+
+    firewall { '200 allow check_mk ':
+      proto  => 'tcp',
+      dport  => [
+        '6557',
+        '6558',
+      ],
+      action => 'accept',
+    }
+
+restart services

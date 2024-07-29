@@ -1,0 +1,110 @@
+---
+- name: "Gather facts about all Scopes"
+  hpe.oneview.oneview_scope_facts:
+    config: "{{ oneview_config_file }}"
+  delegate_to: localhost
+  when: oneview_config_file is defined
+
+- name: "Set hardware_add_task_server_names_list param - default"
+  set_fact:
+    hardware_add_task_server_names_list: "{{ cci_hpe_servers[cci_cluster].keys() }}"
+  when: hardware_status_task_server_names is not defined
+
+- name: "Set hardware_add_task_server_names_list param - from status task"
+  set_fact:
+    hardware_add_task_server_names_list: "{{ hardware_status_task_server_names }}"
+  when: hardware_status_task_server_names is defined
+
+- name: "Set ilo credentials dictionary"
+  include_tasks: set_ilo_credentials_dict.yaml
+  vars:
+    ilo_creds_server_names: "{{ hardware_add_task_server_names_list }}"
+
+- name: "Set iLO hostname"
+  include_tasks: set_ilo_hostname.yaml
+  vars:
+    ilo_hostname_server_names_list_hw_task: "{{ hardware_add_task_server_names_list }}"
+  when: hardware_add_task_server_names_list is defined
+
+- name: "Check iLO IPMI over LAN attribute"
+  include_tasks: get_ilo_ipmi.yaml
+  vars:
+    ilo_ipmi_server_names_list_hw_task: "{{ hardware_add_task_server_names_list }}"
+    enable_ilo_ipmi: true
+  when: hardware_add_task_server_names_list is defined
+
+- name: "Attempting to add sevrer/s in cluster {{ cci_cluster }} to OneView"
+  debug:
+    msg:
+      - "server - {{ item }}"
+      - "ilo_address - {{ cci_hpe_servers[cci_cluster][item].ilo_address }}"
+      - "server profile template - {{ server_profile_templates[cci_cluster][cci_hpe_servers[cci_cluster][item].type] }}"
+      - "licensing intent - {{ licensing_intent }}"
+      - "configuration state - {{ configuration_state }}"
+  loop: "{{ hardware_add_task_server_names_list }}"
+
+- name: "Adding server/s - Async task"
+  hpe.oneview.oneview_server_hardware:
+    config: "{{ oneview_config_file }}"
+    state: present
+    data:
+      hostname: "{{ cci_hpe_servers[cci_cluster][item].ilo_address }}"
+      username: "{{ ilo_creds_dict[item].user }}"
+      password: "{{ ilo_creds_dict[item].password }}"
+      force: false
+      licensingIntent: "{{ licensing_intent }}"
+      configurationState: "{{ configuration_state }}"
+      initialScopeUris:
+        - "{{ scopes[0].uri }}"
+  async: 300  # 5 minutes
+  poll: 0   # fire and forget
+  loop: "{{ hardware_add_task_server_names_list }}"
+  register: add_server_hardware_task
+  when:
+    - ilo_creds_dict is defined
+    - oneview_config_file is defined
+  delegate_to: localhost
+
+- name: "Wait for async task/s (Add server hardware) to complete"
+  async_status:
+    jid: "{{ item.ansible_job_id }}"
+  register: add_server_hardware_async_watch_task
+  until: add_server_hardware_async_watch_task.finished
+  retries: 100
+  delay: 5  # seconds
+  loop: "{{ add_server_hardware_task.results }}"
+  when: add_server_hardware_task.changed
+
+- name: "Clean up async files"
+  async_status:
+    jid: "{{ item.ansible_job_id }}"
+    mode: cleanup
+  loop: "{{ add_server_hardware_task.results }}"
+  when: add_server_hardware_async_watch_task is success
+
+- name: "Run Power Task/s"
+  include_tasks: power.yaml
+  vars:
+    power_state: "Off"
+    add_servers_task: true
+    hardware_add_task_server_names: "{{ hardware_add_task_server_names_list }}"
+  when:
+    - add_server_hardware_task.changed
+    - add_server_hardware_async_watch_task is success
+
+- name: "Add Server Profile/s"
+  include_role:
+    name: profiles
+    tasks_from: add.yaml
+  vars:
+    hardware_add_task_server_names: "{{ hardware_add_task_server_names_list }}"
+  when:
+    - add_profile
+    - add_server_hardware_task.changed
+    - add_server_hardware_async_watch_task is success
+
+# TO-DO:
+# Actively monitor the 'state' of the server/s as they are added to OneView,
+# Once one is "OK", allow that server to have his profile added / applied,
+# while conitnuing to watch the status of remaining servers, and as each one reports 'OK',
+# they can proceed with adding / applying their profile.

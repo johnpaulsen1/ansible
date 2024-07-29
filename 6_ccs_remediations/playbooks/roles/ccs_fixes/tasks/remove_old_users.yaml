@@ -1,0 +1,70 @@
+---
+# GIT issue 1274 - Agent cleanup
+- name: Remove OMS user.
+  user:
+    name: "{{ item }}"
+    state: absent
+    remove: yes
+  with_items:
+     - omsagent
+  ignore_errors: true
+
+- name: Remove OMS group.
+  group:
+    name: "{{ item }}"
+    state: absent
+  with_items:
+    - omiusers
+  ignore_errors: true
+
+- name: Check if server is fnb_ad_managed(Errors can be ignored here).
+  command: /bin/grep DomainGroups /etc/sssd/sssd.conf 
+  register: fnb_ad_managed
+  ignore_errors: true
+
+# GIT issue 1268 - Agent cleanup
+- name: Remove known old users.
+  user:
+    name: "{{ item }}"
+    state: absent
+    remove: yes
+  with_items:
+     - user1
+     - user2
+     - user3
+     - user4
+  ignore_errors: true
+  when: fnb_ad_managed is failed
+
+- name: Remove known old groups.
+  group:
+    name: "{{ item }}"
+    state: absent
+  with_items:
+     - user1
+     - user2
+     - user3
+     - user4
+  ignore_errors: true
+  when: fnb_ad_managed is failed
+
+# Remove known orphaned files and directories.
+- name: Remove known orphaned directories.
+  file:
+    path: "{{ item }}"
+    state: absent
+  with_items:
+    - /opt/omi
+    - /etc/opt/microsoft
+    - /etc/opt/omi
+    - /var/opt/microsoft
+    - /var/opt/omi
+    - /opt/microsoft/omsagent
+    - /var/spool/mail/user1
+    - /var/spool/mail/user2
+    - /var/spool/mail/user3
+    - /var/spool/mail/user4
+    - /home/user1
+    - /home/user2
+    - /home/user3
+    - /home/user4

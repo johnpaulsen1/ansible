@@ -1,0 +1,6 @@
+filter_users: clam
+filter_groups: clam
+group_list: Linuxadgroup_prod_FNB_ISS, Backupadgroup_prod_FNB_ISS
+ldap_default_bind_dn: SVC_linux_realm_qa@fnb.co.za
+ldap_default_authtok: GFHng56fd45*gfd98
+ldap_uri: ldaps://fnblanldaps:636, ldaps://fnbdmzldaps:636

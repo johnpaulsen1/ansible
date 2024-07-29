@@ -1,0 +1,24 @@
+- name: check package installed
+  shell: rpm -qa | grep -i BESAgent
+  register: version
+  ignore_errors: yes
+
+- set_fact:
+    installed: true
+    cacheable: yes
+  when: version.rc == 0
+
+- set_fact:
+    installed: false
+    cacheable: yes
+  when: version.rc == 1
+
+
+- name: existing upgrade
+  include: upgrade.yaml
+  when: installed == true
+
+
+- name: clean install
+  include: install.yaml
+  when: installed == false

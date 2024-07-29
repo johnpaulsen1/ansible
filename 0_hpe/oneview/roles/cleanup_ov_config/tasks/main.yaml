@@ -1,0 +1,13 @@
+---
+- name: "OneView Config File stat task"
+  stat:
+    path: "{{ playbook_dir }}/config/files/oneview_config.json"
+  register: oneview_config_file_stat
+  ignore_errors: true
+
+- name: "OneView Config File cleanup task"
+  file:
+    path: "{{ playbook_dir }}/config/files/oneview_config.json"
+    state: absent
+  when: oneview_config_file_stat.stat.exists
+  ignore_errors: true

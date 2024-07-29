@@ -1,0 +1,77 @@
+---
+- name: clean up existing netbackup directories
+  file:
+    path: "{{ item }}"
+    state: absent
+  with_items:
+    - "{{ netbackup_dirs_clean }}"
+  listen: clean up existing netbackup packages
+
+- name: clean up existing netbackup files
+  file:
+    path: "{{ item }}"
+    state: absent
+  with_items:
+    - "{{ netbackup_files_clean }}"
+  listen: clean up existing netbackup packages
+
+- name: create netbackup directory
+  file:
+    path: /usr/openv/netbackup
+    state: directory
+  listen: create symlink required for installer
+
+- name: create install-netbackup.py file
+  template:
+    src: install-netbackup.py.j2
+    dest: /usr/local/bin/install-netbackup.py
+    owner: root
+    group: root
+    mode: '0700'
+  listen: download installer
+
+- name: create NBInstallAnswer.conf file
+  template:
+    src: NBInstallAnswer.conf.j2
+    dest: /tmp/NBInstallAnswer.conf
+    owner: root
+    group: root
+    mode: '0700'
+  listen: download installer
+
+- name: create bp.conf file
+  template:
+    src: bp.conf.j2
+    dest: /usr/openv/netbackup/bp.conf
+    owner: root
+    group: root
+    mode: '0444'
+  listen: download installer
+
+- name: create exclude_list file
+  template:
+    src: exclude_list.j2
+    dest: /usr/openv/netbackup/exclude_list
+    owner: root
+    group: root
+    mode: '0444'
+  listen: download installer
+
+- name: print installer logs
+  command: "tail {{ install_base }}/install.log"
+  register: install_log
+  listen: run the installer
+
+- name: check installer logs for token issues
+  fail:
+    msg: "Contact Backup Team to reissue token for {{ ansible_hostname }}"
+  when: install_log.stdout is search("EXIT STATUS 5940")
+  listen: run the installer
+
+- name: check installer logs for general failures
+  fail:
+    msg: "Installation failed on {{ ansible_hostname }}. Check {{ install_base }}/install.log to troubleshoot"
+  when:
+    - install_log.stdout is not search("That file can be deleted after you are sure the install was successful.")
+    - install_log.stderr is not search("That file can be deleted after you are sure the install was successful.")
+  listen: run the installer

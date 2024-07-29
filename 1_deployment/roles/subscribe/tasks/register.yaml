@@ -1,0 +1,86 @@
+---
+### Register the host ###
+
+- name: register a RHEL physical - PROD
+  shell: subscription-manager register --activationkey=fnb_phys"{{ ansible_distribution_major_version}}"_prod --org=FNB --force
+  ignore_errors: yes
+  when:
+    - ansible_distribution == "RedHat"
+    - ansible_virtualization_type == "physical"
+    - server_role == "prod"
+
+- name: register a RHEL physical - NONPROD
+  shell: subscription-manager register --activationkey=fnb_phys"{{ ansible_distribution_major_version}}" --org=FNB --force
+  ignore_errors: yes
+  when:
+    - ansible_distribution == "RedHat"
+    - ansible_virtualization_type == "physical"
+    - server_role == "nonprod"
+
+- name: register a RHEL virtual - PROD
+  shell: subscription-manager register --activationkey=fnb_rhel"{{ ansible_distribution_major_version}}"_prod --org=FNB --force
+  ignore_errors: yes
+  when:
+    - ansible_distribution == "RedHat"
+    - ansible_virtualization_type == "VMware"
+    - server_role == "prod"
+
+- name: register a RHEL virtual - NONPROD
+  shell: subscription-manager register --activationkey=fnb_rhel"{{ ansible_distribution_major_version}}" --org=FNB --force
+  ignore_errors: yes
+  when:
+    - ansible_distribution == "RedHat"
+    - ansible_virtualization_type == "VMware"
+    - server_role == "nonprod"
+
+- name: register a RHEL zlinux host - PROD
+  shell: subscription-manager register --activationkey=fnbz"{{ ansible_distribution_major_version}}"_prod --org=FNB --force
+  ignore_errors: yes
+  when:
+    - ansible_distribution == "RedHat"
+    - ansible_architecture == "s390x"
+    - server_role == "prod"
+
+- name: register a RHEL zlinux host - NONPROD
+  shell: subscription-manager register --activationkey=fnbz"{{ ansible_distribution_major_version}}" --org=FNB --force
+  ignore_errors: yes
+  when:
+    - ansible_distribution == "RedHat"
+    - ansible_architecture == "s390x"
+    - server_role == "nonprod"
+
+### test case
+- name: register a RHEL virtualbox - PROD
+  shell: subscription-manager register --activationkey=fnb_rhel"{{ ansible_distribution_major_version}}"_prod --org=FNB --force
+  ignore_errors: yes
+  when:
+    - ansible_distribution == "RedHat"
+    - ansible_virtualization_type == "virtualbox"
+    - server_role == "prod"
+
+- name: register a RHEL virtualbox - NONPROD
+  shell: subscription-manager register --activationkey=fnb_rhel"{{ ansible_distribution_major_version}}" --org=FNB --force
+  ignore_errors: yes
+  when:
+    - ansible_distribution == "RedHat"
+    - ansible_virtualization_type == "virtualbox"
+    - server_role == "nonprod"
+
+- name: register a CentOS 7 host - PROD
+  shell: subscription-manager register --activationkey=fnb_centos"{{ ansible_distribution_major_version}}"_prod --org=FNB --force
+  ignore_errors: yes
+  when:
+    - ansible_distribution == "CentOS"
+    - ansible_virtualization_type == "physical" or ansible_virtualization_type == "VMware" or ansible_virtualization_type == "virtualbox"
+    - server_role == "prod"
+
+- name: register a CentOS 7 host - NONPROD
+  shell: subscription-manager register --activationkey=fnb_centos"{{ ansible_distribution_major_version}}" --org=FNB --force
+  ignore_errors: yes
+  when:
+    - ansible_distribution == "CentOS"
+    - ansible_virtualization_type == "physical" or ansible_virtualization_type == "VMware" or ansible_virtualization_type == "virtualbox"
+    - server_role == "nonprod"
+
+- name: enable repos
+  include: enable_repos.yaml

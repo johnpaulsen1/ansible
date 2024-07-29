@@ -1,0 +1,9 @@
+pci_vlan_set: false
+lan_vlan_set: false
+dmz_vlan_set: false
+
+pci_ips: '^x.x.x'
+
+dmz_ips: '^x.x.x'
+
+lan_ips: 'x.x.x' 

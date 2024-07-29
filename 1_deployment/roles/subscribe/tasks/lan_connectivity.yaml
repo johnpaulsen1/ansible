@@ -1,0 +1,27 @@
+---
+- name: test connectivity to capsules - LAN
+  wait_for:
+    host: "{{ item }}"
+    port: 443
+    state: started
+    delay: 1
+    timeout: 10
+  with_random_choice:
+    - "capsule05"
+    - "capsule06"
+  register: lan_result
+  ignore_errors: true
+
+- debug:
+    var: lan_result.results[0]['item']
+
+- debug:
+    var: lan_result.results[0]['invocation']['module_args']['host']
+
+- debug:
+    var: lan_result.results[0]['state']
+
+- name: set subscription host
+  set_fact:
+    subscription_host: "{{ lan_result.results[0]['invocation']['module_args']['host'] }}"
+    cacheable: yes

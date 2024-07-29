@@ -1,0 +1,47 @@
+---
+- name: test connectivity to capsules - DMZ
+  wait_for:
+    host: "{{ item }}"
+    port: 443
+    state: started
+    delay: 0
+    timeout: 3
+  with_random_choice:
+    - "rbcapsule01"
+    - "rbcapsule02"
+    - "rbcapsule03"
+    - "rbcapsule04"
+  register: result
+  ignore_errors: true
+  when: vlan == 'dmz' or vlan == 'pci'
+
+- name: test connectivity to capsules - LAN
+  wait_for:
+    host: "{{ item }}"
+    port: 443
+    state: started
+    delay: 0
+    timeout: 3
+  with_random_choice:
+    - "rbcapsule01"
+    - "rbcapsule02"
+    - "rbcapsule03"
+    - "rbcapsule04"
+  register: result
+  ignore_errors: true
+  when: vlan == 'lan'
+
+
+- debug:
+    var: result.results[0]['invocation']['module_args']['host']
+
+- debug:
+    var: result.results[0]['invocation']['module_args']['state']
+  
+- debug:
+    var: result.results[0]['state']
+
+- name: set subscription host
+  set_fact:
+    subscription_host: "{{ result.results[0]['invocation']['module_args']['host'] }}"
+    cacheable: yes

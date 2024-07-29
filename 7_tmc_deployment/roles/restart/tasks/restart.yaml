@@ -1,0 +1,19 @@
+---
+- name: stop tmc service
+  systemd:
+    state: stopped
+    name: tmc_daemon.service
+    daemon_reload: yes
+    enabled: yes
+
+- name: remove lock file
+  file:
+    path: '/var/run/tmc.pid.lock'
+    state: 'absent'
+
+- name: start tmc service
+  systemd:
+    state: started
+    name: tmc_daemon.service
+    daemon_reload: yes
+    enabled: yes

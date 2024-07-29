@@ -1,0 +1,20 @@
+- name: check policy file
+  stat:
+    path: /var/opt/managesoft/log/tracker.log
+  register: policy_exist
+  no_log: true
+
+- name: "Check policy logfile"
+  shell: grep "Program exited successfully" /var/opt/managesoft/log/policy.log
+  register: policy_file
+  when: policy_exist.stat.exists
+  no_log: true
+
+- set_fact:
+    policy_success: true
+    cacheable: yes
+  when: policy_file.rc == 0 and policy_exist.stat.exists
+  no_log: true
+
+- name: check upload logs
+  include: check_upload.yaml

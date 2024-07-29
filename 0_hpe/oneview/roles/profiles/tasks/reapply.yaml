@@ -1,0 +1,64 @@
+---
+- name: "Block of tasks that re-apply HPE Server/s Profile"
+  block:
+    - name: "Set profiles_firmware_consist_servers param - default"
+      set_fact:
+        profiles_firmware_consist_servers: "{{ cci_hpe_servers[cci_cluster].keys() }}"
+      when:
+        - server_profiles_add_profile_failed is not defined
+        - profile_status_task_profiles_firmware_notok_server_names is not defined
+        - hardware_status_task_server_names is not defined
+        - update_server_profiles_template_failed_servers is not defined
+
+    - name: "Set profiles_firmware_consist_servers param - from profile status task"
+      set_fact:
+        profiles_firmware_consist_servers: "{{ profile_status_task_profiles_firmware_notok_server_names }}"
+      when:
+        - server_profiles_add_profile_failed is not defined
+        - profile_status_task_profiles_firmware_notok_server_names is defined
+        - hardware_status_task_server_names is not defined
+        - update_server_profiles_template_failed_servers is not defined
+
+    - name: "Set profiles_firmware_consist_servers param - from hardware status task"
+      set_fact:
+        profiles_firmware_consist_servers: "{{ hardware_status_task_server_names }}"
+      when:
+        - server_profiles_add_profile_failed is not defined
+        - hardware_status_task_server_names is defined
+        - profile_status_task_profiles_firmware_notok_server_names is not defined
+        - update_server_profiles_template_failed_servers is not defined
+
+    - name: "Set profiles_firmware_consist_servers param - from update from template task"
+      set_fact:
+        profiles_firmware_consist_servers: "{{ update_server_profiles_template_failed_servers }}"
+      when:
+        - server_profiles_add_profile_failed is not defined
+        - update_server_profiles_template_failed_servers is defined
+        - profile_status_task_profiles_firmware_notok_server_names is not defined
+        - hardware_status_task_server_names is not defined
+
+    - name: "Set profiles_firmware_consist_servers param - from add profile task"
+      set_fact:
+        profiles_firmware_consist_servers: "{{ server_profiles_add_profile_failed }}"
+      when:
+        - server_profiles_add_profile_failed is defined
+        - update_server_profiles_template_failed_servers is not defined
+        - profile_status_task_profiles_firmware_notok_server_names is not defined
+        - hardware_status_task_server_names is not defined
+
+    - name: "Fire off a re-apply request to the HPE OneView Appliance for Server Profile/s whose firmware is NOT '{{ required_firmware_consistency_state }}'"
+      hpe_oneview_server_profile_reapply:
+        appliance: "{{ oneview_appliance }}"
+        ssl_enable: true
+        ssl_cert_filepath: /etc/ssl/certs/itservices.lan-ca.crt
+        auth_domain: local
+        username: "{{ vault_ov_user }}"
+        password: "{{ vault_ov_password }}"
+        server_profile_name: "{{ item }}"
+      loop: "{{ profiles_firmware_consist_servers }}"
+      register: hpe_oneview_server_profile_reapply_task
+
+    - name: "Show the result of the Fired off re-apply task"
+      debug:
+        msg: "{{ item }}"
+      loop: "{{ hpe_oneview_server_profile_reapply_task.results }}"

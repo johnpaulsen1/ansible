@@ -1,0 +1,66 @@
+---
+- name: "Block of tasks that ensure HPE Server/s Profiles are '{{ required_template_compliance_state }}' with their template"
+  block:
+    - name: "Set profiles_template_comp_servers param - default"
+      set_fact:
+        profiles_template_comp_servers: "{{ cci_hpe_servers[cci_cluster].keys() }}"
+      when:
+        - profile_status_task_profiles_template_notok_server_names is not defined
+
+    - name: "Set profiles_template_comp_servers param - from profile status task"
+      set_fact:
+        profiles_template_comp_servers: "{{ profile_status_task_profiles_template_notok_server_names }}"
+      when:
+        - profile_status_task_profiles_template_notok_server_names is defined
+
+    - name: "Ensure that the server profile is '{{ required_template_compliance_state }}' with its template - Async task"
+      hpe.oneview.oneview_server_profile:
+        config: "{{ oneview_config_file }}"
+        state: compliant
+        data:
+          name: "{{ item }}"
+      async: 7200   # 2 hours
+      poll: 0   # fire and forget
+      loop: "{{ profiles_template_comp_servers }}"
+      register: server_profile_template_compliance
+      delegate_to: localhost
+      when:
+        - oneview_config_file is defined
+        - profiles_template_comp_servers is defined
+
+    - name: "Wait for async task (profile template compliance) to complete"
+      async_status:
+        jid: "{{ item.ansible_job_id }}"
+      register: server_profile_template_compliance_async_watch_task
+      until: server_profile_template_compliance_async_watch_task.finished
+      retries: 1440   # covers the 2 hours (5 x 1440 = 7200 seconds)
+      delay: 5  # seconds
+      loop: "{{ server_profile_template_compliance.results }}"
+      when: server_profile_template_compliance.changed
+
+  rescue:
+    - name: "Block of tasks that handle the rescue of the re-apply HPE Server/s Profile"
+      block:
+        - name: "Attempt to issue a re-apply of Server Profile/s if template compliance failed"
+          debug:
+            msg: "Attempting to re-apply server profile - {{ item.item.item }}"
+          loop: "{{ server_profile_template_compliance_async_watch_task.results }}"
+          when: item.failed
+
+        - name: "Set list of server profiles that failed during their template compliance update task"
+          set_fact:
+            server_profiles_template_comp_failed: "{{ server_profiles_template_comp_failed | default([]) + [item.item.item] }}"
+          loop: "{{ server_profile_template_compliance_async_watch_task.results }}"
+          when: item.failed
+
+        - name: "Show server profile/s that failed during their template compliance update task"
+          debug:
+            msg: "Server Profile - {{ item }}"
+          loop: "{{ server_profiles_template_comp_failed }}"
+          when: server_profiles_template_comp_failed is defined
+
+        - name: "Run task to attempt to re-apply Server Profile/s that failed during their template compliance update task"
+          include_tasks: reapply.yaml
+          vars:
+            update_server_profiles_template_failed_servers: "{{ server_profiles_template_comp_failed }}"
+          when: server_profiles_template_comp_failed is defined

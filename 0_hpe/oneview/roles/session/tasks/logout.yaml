@@ -1,0 +1,6 @@
+---
+- name: "Logout Session"
+  hpe.oneview.oneview_logout_session:
+    config: "{{ oneview_config_file }}"
+    sessionID: "{{ session.ansible_facts.session }}"
+  delegate_to: localhost

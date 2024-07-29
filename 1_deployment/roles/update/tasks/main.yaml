@@ -1,0 +1,29 @@
+##Only look for repos on centos, as these are installed by updated centos-release packages
+- name: find repo files
+  find:
+   paths: /etc/yum.repos.d/
+   patterns: 'Cent*.repo'
+  register: files_to_delete
+  when: ansible_distribution  == "CentOS"
+
+##Only run this if there are CentOS repo files found
+- name: clean repo files
+  file:
+    path: "{{ item.path }}"
+    state: absent
+  with_items:
+    - "{{ files_to_delete.files }}"
+  when: files_to_delete.files is defined
+
+- name: run yum update
+  yum:
+    name: '*'
+    state: latest
+  register: yum_output
+
+- name: Reboot Host if packages were updated
+  shell: echo "Patching completed, rebooting" >> /var/log/messages && sleep 5 && /sbin/shutdown -r now "Patching completed, rebooting"
+  async: 1
+  poll: 0
+  ignore_errors: true
+  when: "'Complete!' in yum_output.results[-1]"

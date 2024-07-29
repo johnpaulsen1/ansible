@@ -1,0 +1,173 @@
+- name: create BES framework
+  file:
+    path: "{{ item }}"
+    state: directory
+  with_items:
+    - "/etc/opt/BESClient/"
+    - "/var/opt/BESClient/"
+
+### LAN sites
+- name: download masthead file - lan - x86_64
+  get_url:
+    url: "{{ ilmt_lan_masthead }}"
+    dest: /etc/opt/BESClient/actionsite.afxm
+    mode: '0770'
+    validate_certs: false
+  when:
+    - vlan == "lan"
+    - ansible_architecture == "x86_64"
+    - ansible_distribution == "RedHat" or ansible_distribution  == "CentOS"
+    - ansible_distribution_major_version != "5"
+
+## X86_64
+- name: download package - lan - x86_64
+  get_url:
+    url: "{{ ilmt_install_x64 }}"
+    dest: /tmp/besagent.rpm
+    mode: '0770'
+    validate_certs: false
+  when:
+   - vlan == "lan"
+   - ansible_architecture  == "x86_64"
+   - ansible_distribution  == "RedHat" or ansible_distribution  == "CentOS"
+   - (ansible_distribution_major_version  != "5")
+
+## Zlinux
+- name: download package - lan - s390x
+  get_url:
+    url: "{{ ilmt_install_zlinux }}"
+    dest: /tmp/besagent.rpm
+    mode: '0770'
+    validate_certs: false
+  when:
+   - vlan == "lan"
+   - ansible_architecture  == "s390x"
+   - ansible_distribution  == "RedHat"
+   - ansible_distribution_major_version  != "5"
+
+### DMZ sites
+- name: download masthead file - dmz - x86_64
+  get_url:
+    url: "{{ ilmt_dmz_masthead }}"
+    dest: /etc/opt/BESClient/actionsite.afxm
+    mode: '0770'
+    validate_certs: false
+  when:
+    - vlan == "dmz"
+    - ansible_architecture == "x86_64"
+    - ansible_distribution == "RedHat" or ansible_distribution  == "CentOS"
+    - (ansible_distribution_major_version != "5")
+
+- name: download config file - dmz - x86_64
+  get_url:
+    url: "{{ ilmt_dmz_besclient }}"
+    dest: /var/opt/BESClient/besclient.config
+    mode: '0770'
+    validate_certs: false
+  when:
+    - vlan == "dmz"
+    - ansible_architecture == "x86_64"
+    - ansible_distribution == "RedHat" or ansible_distribution  == "CentOS"
+    - (ansible_distribution_major_version != "5")
+
+## X86_64
+- name: download package - dmz - x86_64
+  get_url:
+    url: "{{ ilmt_install_x64 }}"
+    dest: /tmp/besagent.rpm
+    mode: '0770'
+    validate_certs: false
+  when:
+   - vlan == "dmz"
+   - ansible_architecture  == "x86_64"
+   - ansible_distribution  == "RedHat" or ansible_distribution  == "CentOS"
+   - ansible_distribution_major_version  != "5"
+
+## Zlinux
+- name: download package - dmz - s390x
+  get_url:
+    url: "{{ ilmt_install_zlinux }}"
+    dest: /tmp/besagent.rpm
+    mode: '0770'
+    validate_certs: false
+  when:
+   - vlan == "dmz"
+   - ansible_architecture  == "s390x"
+   - ansible_distribution  == "RedHat" or ansible_distribution  == "CentOS"
+   - ansible_distribution_major_version  != "5"
+
+### PCI sites
+- name: download masthead file - pci - x86_64
+  get_url:
+    url: "{{ ilmt_dmz_masthead }}"
+    dest: /etc/opt/BESClient/actionsite.afxm
+    mode: '0770'
+    validate_certs: false
+  when:
+    - vlan == "pci"
+    - ansible_architecture == "x86_64"
+    - ansible_distribution == "RedHat" or ansible_distribution  == "CentOS"
+    - (ansible_distribution_major_version != "5")
+
+- name: download config file - pci - x86_64
+  get_url:
+    url: "{{ ilmt_dmz_besclient }}"
+    dest: /var/opt/BESClient/besclient.config
+    mode: '0770'
+    validate_certs: false
+  when:
+    - vlan == "pci"
+    - ansible_architecture == "x86_64"
+    - ansible_distribution == "RedHat" or ansible_distribution  == "CentOS"
+    - (ansible_distribution_major_version != "5")
+
+## X86_64
+- name: download package - pci - x86_64
+  get_url:
+    url: "{{ ilmt_install_x64 }}"
+    dest: /tmp/besagent.rpm
+    mode: '0770'
+    validate_certs: false
+  when:
+   - vlan == "pci"
+   - ansible_architecture  == "x86_64"
+   - ansible_distribution  == "RedHat" or ansible_distribution  == "CentOS"
+   - ansible_distribution_major_version  != "5"
+
+## Zlinux
+- name: download package - pci - s390x
+  get_url:
+    url: "{{ ilmt_install_zlinux }}"
+    dest: /tmp/besagent.rpm
+    mode: '0770'
+    validate_certs: false
+  when:
+   - vlan == "pci"
+   - ansible_architecture  == "s390x"
+   - ansible_distribution  == "RedHat" or ansible_distribution  == "CentOS"
+   - ansible_distribution_major_version  != "5"
+
+- name: install BESClient
+  yum:
+    name: /tmp/besagent.rpm
+    state: present
+
+- name: start service - RHEL6
+  service:
+    name: besclient
+    state: restarted
+  when:
+   - ansible_architecture  == "x86_64" or ansible_architecture  == "s390x"
+   - ansible_distribution  == "RedHat" or ansible_distribution  == "CentOS"
+   - ansible_distribution_major_version  == "6"
+  ignore_errors: true
+
+- name: start service - RHEL7+
+  systemd:
+    name: besclient
+    state: restarted
+  when:
+   - ansible_architecture  == "x86_64" or ansible_architecture  == "s390x"
+   - ansible_distribution  == "RedHat" or ansible_distribution  == "CentOS"
+   - ansible_distribution_major_version  >= "7"
+  ignore_errors: true

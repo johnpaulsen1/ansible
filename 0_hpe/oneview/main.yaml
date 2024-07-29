@@ -1,0 +1,28 @@
+---
+- hosts: "localhost"
+  gather_facts: false
+  collections:
+    - hpe.oneview
+    - hpe.ilo
+    - community.general
+  vars:
+    - ansible_python_interpreter: "{{ lookup('env','HOME') }}/programming/python/virt_envs/my-py/bin/pyenv"
+
+  vars_files:
+    - "{{ playbook_dir }}/vars/vault.yaml.enc"
+    - "{{ playbook_dir }}/vars/oneview_config.yaml"
+    - "{{ playbook_dir }}/vars/oneview_data.yaml"
+
+  roles:
+    - {role: set_ov_config, tags: always}
+    - {role: session, tags: ['all', 'session']}
+    - {role: hardware, tags: ['all', 'hardware']}
+    - {role: profiles, tags: ['all', 'profiles']}
+    - {role: labels, tags: ['all', 'labels']}
+    - {role: cleanup_ov_config, tags: always}
+
+# TO-DO:
+# - Add in role for managing server profile templates
+# - Look at setting the var: cci_hpe_servers by reading in a file (from sharepoint maybe?) that contains the necessary data.
+#   Better to have ONE central location with this info that can be updated and then read in by the playbook.
+# - Add functionality to test_parsed_params role to test the values of the vars that are parsed in from the command line when this playbook is run.

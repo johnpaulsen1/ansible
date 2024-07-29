@@ -1,0 +1,6 @@
+- set_fact:
+    network: true
+  when: "{{ dmz_ip_reachable }} == true or {{ lan_ip_reachable }} == true "
+
+- debug:
+    msg: "host: '{{ ansible_fqdn }}', ndtask: '{{ ndtask_running }}', mgsusageag: '{{ mgsusageag_running }}', installation: '{{ install_success }}', policy: '{{ policy_success }}', tracker: '{{ tracker_success }}', upload: '{{ upload_success }}', network: '{{ network }}', vlan: '{{ vlan }}'"

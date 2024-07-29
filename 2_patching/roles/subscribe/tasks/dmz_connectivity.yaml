@@ -1,0 +1,29 @@
+---
+- name: test connectivity to capsules - DMZ
+  wait_for:
+    host: "{{ item }}"
+    port: 443
+    state: started
+    delay: 1
+    timeout: 10
+  with_random_choice:
+    - "rbcapsule01"
+    - "rbcapsule02"
+    - "rbcapsule03"
+    - "rbcapsule04"
+  register: dmz_result
+  ignore_errors: true
+
+- debug:
+    var: dmz_result.results[0]['item']
+
+- debug:
+    var: dmz_result.results[0]['invocation']['module_args']['host']
+
+- debug:
+    var: dmz_result.results[0]['state']
+
+- name: set subscription host
+  set_fact:
+    subscription_host: "{{ dmz_result.results[0]['invocation']['module_args']['host'] }}"
+    cacheable: yes

@@ -1,0 +1,18 @@
+---
+- name: check flask port 5432
+  wait_for:
+    host: x.x.x.x
+    port: yyyy
+    state: started
+    delay: 0
+    timeout: 3
+  ignore_errors: yes
+  register: port_check
+
+- name: kill existing yum processes
+  shell: pkill -9 -f yum
+  ignore_errors: yes
+
+- name: install tmc_daemon
+  include: install.yaml
+  when: port_check is success and ansible_distribution_major_version >= '7'
