@@ -106,13 +106,13 @@
 
 - name: "disable boot start"
   shell: /opt/splunkforwarder/bin/splunk disable boot-start --accept-license --answer-yes --no-prompt
-  ignore_errors: yes
+  ignore_errors: true
   when: splunk_installed == true
 
 # rhel / centos 7/8
 - name: "enable boot start - 7"
   shell: /opt/splunkforwarder/bin/splunk enable boot-start --accept-license --answer-yes --no-prompt -systemd-managed 1 -user splunk
-  ignore_errors: yes
+  ignore_errors: true
   when: (splunk_installed == true) and (ansible_distribution == 'RedHat' or ansible_distribution == 'CentOS') and (ansible_distribution_major_version != '6')
 
 - name: reload daemon
@@ -146,7 +146,7 @@
   service:
     name: splunk
     enabled: yes
-  ignore_errors: yes
+  ignore_errors: true
   when: (splunk_installed == true) and (ansible_distribution == 'RedHat' or ansible_distribution == 'CentOS') and (ansible_distribution_major_version == '6')
 
 - name: "start splunk service - 6"

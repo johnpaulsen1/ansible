@@ -93,7 +93,7 @@
 
 - name: clean repos
   shell: yum clean all
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: clean cache
   file:

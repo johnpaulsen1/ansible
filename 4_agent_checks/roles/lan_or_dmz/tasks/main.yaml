@@ -38,13 +38,13 @@
 - block:
    - name: check port for a DMZ host
      wait_for:
-       host: 172.20.25.141
-       port: 80
+       host: x.x.x.x
+       port: yyyy
        state: started
        delay: 0
        timeout: 3
      when: vlan == "dmz"
-     ignore_errors: yes
+     ignore_errors: true
      register: dmz_result
 
 - debug:
@@ -52,7 +52,7 @@
 
 - debug:
     msg: "DMZ connectivity working"
-  ignore_errors: yes
+  ignore_errors: true
   when: dmz_result['state'] == "started"
 
 - set_fact:
@@ -63,13 +63,13 @@
 - block:
   - name: check port for a LAN host
     wait_for:
-      host: 10.33.205.169
-      port: 80
+      host: x.x.x.x
+      port: yyyy
       state: started
       delay: 0
       timeout: 3
     when: vlan == "lan"
-    ignore_errors: yes
+    ignore_errors: true
     register: lan_result
 
 - debug:

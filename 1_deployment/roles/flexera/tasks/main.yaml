@@ -1,7 +1,7 @@
 - name: managesoft package installed?
   shell: rpm -qa | grep managesoft
   register: managesoft_result
-  ignore_errors: yes
+  ignore_errors: true
 
 - debug:
     var: managesoft_result

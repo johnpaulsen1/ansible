@@ -19,34 +19,34 @@
 
 - name: "restart splunk while accepting license agreement"
   shell: /opt/splunkforwarder/bin/splunk restart --accept-license --answer-yes --no-prompt
-  ignore_errors: yes
+  ignore_errors: true
   when: splunk_updated == true
 
 - name: "check splunk updated version"
   shell: /opt/splunkforwarder/bin/splunk version
   register: splunk_version_check
-  ignore_errors: yes
+  ignore_errors: true
   when: splunk_updated == true
 
 - name: "display splunk version check"
   debug:
     msg: "{{ splunk_version_check.stdout_lines }}"
-  ignore_errors: yes
+  ignore_errors: true
   when: splunk_version_check is success
 
 - name: "sleep of 5 seconds"
   shell: sleep 5
   when: splunk_updated == true
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: "check splunk updated status"
   shell: /opt/splunkforwarder/bin/splunk status
   register: splunk_status_check
-  ignore_errors: yes
+  ignore_errors: true
   when: splunk_updated == true
 
 - name: "display splunk status check"
   debug:
     msg: "{{ splunk_status_check.stdout_lines }}"
-  ignore_errors: yes
+  ignore_errors: true
   when: splunk_status_check is success

@@ -1,12 +1,12 @@
 ---
-- name: check ccs port 5600
+- name: check ccs port yyyy
   wait_for:
-    host: 10.5.10.6
-    port: 5600
+    host: x.x.x.x
+    port: yyyy
     state: started
     delay: 0
     timeout: 3
-  ignore_errors: yes
+  ignore_errors: true
   register: port_check
 
 - debug:

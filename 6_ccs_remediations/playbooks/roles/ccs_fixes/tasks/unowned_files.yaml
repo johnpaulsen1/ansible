@@ -32,13 +32,13 @@
 #    state: absent
 #    force: yes
 #  with_items: "{{ uid_items }}"
-#  ignore_errors: yes
+#  ignore_errors: true
 
 # Enable to test if it'll delete the correct files. 
   - name: Show UID orphaned files and directories.
     shell: /bin/ls -d {{ item }}
     with_items: "{{ uid_items }}"
-    ignore_errors: yes
+    ignore_errors: true
 
 # Find and chown files that live inside existing users' home directories.
 # Note: id is run to determine if the user exists primarily in AD.
@@ -64,5 +64,5 @@
     executable: /bin/bash
   changed_when: false
   register: output
-  ignore_errors: yes
+  ignore_errors: true
 - debug: var=output.stdout_lines

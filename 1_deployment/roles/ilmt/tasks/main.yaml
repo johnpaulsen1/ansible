@@ -1,7 +1,7 @@
 - name: check package installed
   shell: rpm -qa | grep -i BESAgent
   register: version
-  ignore_errors: yes
+  ignore_errors: true
 
 - set_fact:
     installed: true
