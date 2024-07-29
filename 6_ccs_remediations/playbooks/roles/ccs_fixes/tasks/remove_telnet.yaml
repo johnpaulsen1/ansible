@@ -5,4 +5,4 @@
   yum:
     name: telnet
     state: absent
-  ignore_errors: yes
+  ignore_errors: true

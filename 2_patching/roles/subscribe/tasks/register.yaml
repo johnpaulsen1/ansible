@@ -3,21 +3,21 @@
 
 - name: register a RHEL physical
   shell: subscription-manager register --activationkey=fnb_rhel"{{ ansible_distribution_major_version}}"_physical --org=FNB --force
-  ignore_errors: yes
+  ignore_errors: true
   when:
     - ansible_distribution == "RedHat"
     - ansible_virtualization_type == "physical" 
     
 - name: register a RHEL virtual
   shell: subscription-manager register --activationkey=fnb_rhel"{{ ansible_distribution_major_version}}" --org=FNB --force
-  ignore_errors: yes
+  ignore_errors: true
   when:
     - ansible_distribution == "RedHat"
     - ansible_virtualization_type == "VMware" 
 
 - name: register a RHEL zlinux host
   shell: subscription-manager register --activationkey=fnbz"{{ ansible_distribution_major_version}}" --org=FNB --force
-  ignore_errors: yes
+  ignore_errors: true
   when:
     - ansible_distribution == "RedHat"
     - ansible_architecture == "s390x" 
@@ -25,21 +25,21 @@
 ### test case
 - name: register a RHEL virtualbox
   shell: subscription-manager register --activationkey=fnb_rhel"{{ ansible_distribution_major_version}}" --org=FNB --force
-  ignore_errors: yes
+  ignore_errors: true
   when:
     - ansible_distribution == "RedHat"
     - ansible_virtualization_type == "virtualbox"  
 
 - name: register a CentOS 7 host
   shell: subscription-manager register --activationkey=fnb_centos"{{ ansible_distribution_major_version}}" --org=FNB --force
-  ignore_errors: yes
+  ignore_errors: true
   when:
     - ansible_distribution == "CentOS"
     - ansible_virtualization_type == "physical" or ansible_virtualization_type == "VMware" or ansible_virtualization_type == "virtualbox"
 
 - name: register a ZLINUX host
   shell: subscription-manager register --activationkey=fnbz"{{ ansible_distribution_major_version}}" --org=FNB --force
-  ignore_errors: yes
+  ignore_errors: true
   when:
     - ansible_virtualization_type == "zlinux"
 
