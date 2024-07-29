@@ -60,283 +60,283 @@ cci_clusters:
 cci_hpe_servers:
   w01-rtm2:
     nlul-cci-rtm2-w01-provisioning01:
-      ilo_address: 10.250.161.4
+      ilo_address: x.x.x.x
       type: provisioning
     nlul-cci-rtm2-w01-master01:
-      ilo_address: 10.250.161.11
+      ilo_address: x.x.x.x
       type: master
     nlul-cci-rtm2-w01-master02:
-      ilo_address: 10.250.161.12
+      ilo_address: x.x.x.x
       type: master
     nlul-cci-rtm2-w01-master03:
-      ilo_address: 10.250.161.13
+      ilo_address: x.x.x.x
       type: master
     nlul-cci-rtm2-w01-storage01:
-      ilo_address: 10.250.161.14
+      ilo_address: x.x.x.x
       type: storage
     nlul-cci-rtm2-w01-storage02:
-      ilo_address: 10.250.161.15
+      ilo_address: x.x.x.x
       type: storage
     nlul-cci-rtm2-w01-storage03:
-      ilo_address: 10.250.161.16
+      ilo_address: x.x.x.x
       type: storage
     nlul-cci-rtm2-w01-infra01:
-      ilo_address: 10.250.161.17
+      ilo_address: x.x.x.x
       type: infra
     nlul-cci-rtm2-w01-infra02:
-      ilo_address: 10.250.161.18
+      ilo_address: x.x.x.x
       type: infra
     nlul-cci-rtm2-w01-infra03:
-      ilo_address: 10.250.161.19
+      ilo_address: x.x.x.x
       type: infra
     nlul-cci-rtm2-w01-workerlt01:
-      ilo_address: 10.250.161.20
+      ilo_address: x.x.x.x
       type: workerlt
     nlul-cci-rtm2-w01-workerlt02:
-      ilo_address: 10.250.161.21
+      ilo_address: x.x.x.x
       type: workerlt
     nlul-cci-rtm2-w01-workerlt03:
-      ilo_address: 10.250.161.22
+      ilo_address: x.x.x.x
       type: workerlt
     nlul-cci-rtm2-w01-workerlt04:
-      ilo_address: 10.250.161.23
+      ilo_address: x.x.x.x
       type: workerlt
     nlul-cci-rtm2-w01-workerlt05:
-      ilo_address: 10.250.161.24
+      ilo_address: x.x.x.x
       type: workerlt
     nlul-cci-rtm2-w01-workerlt06:
-      ilo_address: 10.250.161.25
+      ilo_address: x.x.x.x
       type: workerlt
     nlul-cci-rtm2-w01-workerlt07:
-      ilo_address: 10.250.161.26
+      ilo_address: x.x.x.x
       type: workerlt
     nlul-cci-rtm2-w01-workerlt08:
-      ilo_address: 10.250.161.27
+      ilo_address: x.x.x.x
       type: workerlt
     nlul-cci-rtm2-w01-workerlt09:
-      ilo_address: 10.250.161.28
+      ilo_address: x.x.x.x
       type: workerlt
   w01-asd2:
     nlup-cci-asd2-w01-provisioning01:
-      ilo_address: 10.242.109.132
+      ilo_address: x.x.x.x
       type: provisioning
     nlup-cci-asd2-w01-master01:
-      ilo_address: 10.242.109.139
+      ilo_address: x.x.x.x
       type: master
     nlup-cci-asd2-w01-master02:
-      ilo_address: 10.242.109.140
+      ilo_address: x.x.x.x
       type: master
     nlup-cci-asd2-w01-master03:
-      ilo_address: 10.242.109.141
+      ilo_address: x.x.x.x
       type: master
     nlup-cci-asd2-w01-storage01:
-      ilo_address: 10.242.109.142
+      ilo_address: x.x.x.x
       type: storage
     nlup-cci-asd2-w01-storage02:
-      ilo_address: 10.242.109.143
+      ilo_address: x.x.x.x
       type: storage
     nlup-cci-asd2-w01-storage03:
-      ilo_address: 10.242.109.144
+      ilo_address: x.x.x.x
       type: storage
     nlup-cci-asd2-w01-infra01:
-      ilo_address: 10.242.109.145
+      ilo_address: x.x.x.x
       type: infra
     nlup-cci-asd2-w01-infra02:
-      ilo_address: 10.242.109.146
+      ilo_address: x.x.x.x
       type: infra
     nlup-cci-asd2-w01-infra03:
-      ilo_address: 10.242.109.147
+      ilo_address: x.x.x.x
       type: infra
     nlup-cci-asd2-w01-workerlt01:
-      ilo_address: 10.242.109.148
+      ilo_address: x.x.x.x
       type: workerlt
     nlup-cci-asd2-w01-workerlt02:
-      ilo_address: 10.242.109.149
+      ilo_address: x.x.x.x
       type: workerlt
     nlup-cci-asd2-w01-workerlt03:
-      ilo_address: 10.242.109.150
+      ilo_address: x.x.x.x
       type: workerlt
     nlup-cci-asd2-w01-workerlt04:
-      ilo_address: 10.242.109.151
+      ilo_address: x.x.x.x
       type: workerlt
     nlup-cci-asd2-w01-workerlt05:
-      ilo_address: 10.242.109.152
+      ilo_address: x.x.x.x
       type: workerlt
     nlup-cci-asd2-w01-workerlt06:
-      ilo_address: 10.242.109.162
+      ilo_address: x.x.x.x
       type: workerlt
     nlup-cci-asd2-w01-workerlt07:
-      ilo_address: 10.242.109.163
+      ilo_address: x.x.x.x
       type: workerlt
   w01-rtm1:
     nlup-cci-rtm1-w01-provisioning01:
-      ilo_address: 10.242.108.132
+      ilo_address: x.x.x.x
       type: provisioning
     nlup-cci-rtm1-w01-master01:
-      ilo_address: 10.242.108.139
+      ilo_address: x.x.x.x
       type: master
     nlup-cci-rtm1-w01-master02:
-      ilo_address: 10.242.108.140
+      ilo_address: x.x.x.x
       type: master
     nlup-cci-rtm1-w01-master03:
-      ilo_address: 10.242.108.141
+      ilo_address: x.x.x.x
       type: master
     nlup-cci-rtm1-w01-storage01:
-      ilo_address: 10.242.108.142
+      ilo_address: x.x.x.x
       type: storage
     nlup-cci-rtm1-w01-storage02:
-      ilo_address: 10.242.108.143
+      ilo_address: x.x.x.x
       type: storage
     nlup-cci-rtm1-w01-storage03:
-      ilo_address: 10.242.108.144
+      ilo_address: x.x.x.x
       type: storage
     nlup-cci-rtm1-w01-infra01:
-      ilo_address: 10.242.108.145
+      ilo_address: x.x.x.x
       type: infra
     nlup-cci-rtm1-w01-infra02:
-      ilo_address: 10.242.108.146
+      ilo_address: x.x.x.x
       type: infra
     nlup-cci-rtm1-w01-infra03:
-      ilo_address: 10.242.108.147
+      ilo_address: x.x.x.x
       type: infra
     nlup-cci-rtm1-w01-workerlt01:
-      ilo_address: 10.242.108.148
+      ilo_address: x.x.x.x
       type: workerlt
     nlup-cci-rtm1-w01-workerlt02:
-      ilo_address: 10.242.108.149
+      ilo_address: x.x.x.x
       type: workerlt
     nlup-cci-rtm1-w01-workerlt03:
-      ilo_address: 10.242.108.150
+      ilo_address: x.x.x.x
       type: workerlt
     nlup-cci-rtm1-w01-workerlt04:
-      ilo_address: 10.242.108.151
+      ilo_address: x.x.x.x
       type: workerlt
     nlup-cci-rtm1-w01-workerlt05:
-      ilo_address: 10.242.108.152
+      ilo_address: x.x.x.x
       type: workerlt
     nlup-cci-rtm1-w01-workerlt06:
-      ilo_address: 10.242.108.162
+      ilo_address: x.x.x.x
       type: workerlt
     nlup-cci-rtm1-w01-workerlt07:
-      ilo_address: 10.242.108.163
+      ilo_address: x.x.x.x
       type: workerlt
   w01-zl:
     nlup-cci-zl-w01-provisioning01:
-      ilo_address: 10.242.109.68
+      ilo_address: x.x.x.x
       type: provisioning
     nlup-cci-zl-w01-master01:
-      ilo_address: 10.242.109.75
+      ilo_address: x.x.x.x
       type: master
     nlup-cci-zl-w01-master02:
-      ilo_address: 10.242.109.76
+      ilo_address: x.x.x.x
       type: master
     nlup-cci-zl-w01-master03:
-      ilo_address: 10.242.109.77
+      ilo_address: x.x.x.x
       type: master
     nlup-cci-zl-w01-storage01:
-      ilo_address: 10.242.109.78
+      ilo_address: x.x.x.x
       type: storage
     nlup-cci-zl-w01-storage02:
-      ilo_address: 10.242.109.79
+      ilo_address: x.x.x.x
       type: storage
     nlup-cci-zl-w01-storage03:
-      ilo_address: 10.242.109.80
+      ilo_address: x.x.x.x
       type: storage
     nlup-cci-zl-w01-infra01:
-      ilo_address: 10.242.109.81
+      ilo_address: x.x.x.x
       type: infra
     nlup-cci-zl-w01-infra02:
-      ilo_address: 10.242.109.82
+      ilo_address: x.x.x.x
       type: infra
     nlup-cci-zl-w01-infra03:
-      ilo_address: 10.242.109.83
+      ilo_address: x.x.x.x
       type: infra
     nlup-cci-zl-w01-workerlt01:
-      ilo_address: 10.242.109.84
+      ilo_address: x.x.x.x
       type: workerlt
     nlup-cci-zl-w01-workerlt02:
-      ilo_address: 10.242.109.85
+      ilo_address: x.x.x.x
       type: workerlt
     nlup-cci-zl-w01-workerlt03:
-      ilo_address: 10.242.109.86
+      ilo_address: x.x.x.x
       type: workerlt
     nlup-cci-zl-w01-workerlt04:
-      ilo_address: 10.242.109.87
+      ilo_address: x.x.x.x
       type: workerlt
     nlup-cci-zl-w01-workerlt05:
-      ilo_address: 10.242.109.88
+      ilo_address: x.x.x.x
       type: workerlt
     nlup-cci-zl-w01-workerlt06:
-      ilo_address: 10.242.109.89
+      ilo_address: x.x.x.x
       type: workerlt
     nlup-cci-zl-w01-workerlt07:
-      ilo_address: 10.242.109.90
+      ilo_address: x.x.x.x
       type: workerlt
     nlup-cci-zl-w01-workerlt08:
-      ilo_address: 10.242.109.91
+      ilo_address: x.x.x.x
       type: workerlt
     nlup-cci-zl-w01-workerlt09:
-      ilo_address: 10.242.109.92
+      ilo_address: x.x.x.x
       type: workerlt
     nlup-cci-zl-w01-workerlt10:
-      ilo_address: 10.242.109.93
+      ilo_address: x.x.x.x
       type: workerlt
     nlup-cci-zl-w01-workerlt11:
-      ilo_address: 10.242.109.94
+      ilo_address: x.x.x.x
       type: workerlt
   h01-rtm1:
     nlup-cci-rtm1-h01-master01:
-      ilo_address: 10.242.108.153
+      ilo_address: x.x.x.x
       type: master
     nlup-cci-rtm1-h01-master02:
-      ilo_address: 10.242.108.154
+      ilo_address: x.x.x.x
       type: master
     nlup-cci-rtm1-h01-master03:
-      ilo_address: 10.242.108.155
+      ilo_address: x.x.x.x
       type: master
     nlup-cci-rtm1-h01-storage01:
-      ilo_address: 10.242.108.156
+      ilo_address: x.x.x.x
       type: storage
     nlup-cci-rtm1-h01-storage02:
-      ilo_address: 10.242.108.157
+      ilo_address: x.x.x.x
       type: storage
     nlup-cci-rtm1-h01-storage03:
-      ilo_address: 10.242.108.158
+      ilo_address: x.x.x.x
       type: storage
     nlup-cci-rtm1-h01-workerlt01:
-      ilo_address: 10.242.108.159
+      ilo_address: x.x.x.x
       type: workerlt
     nlup-cci-rtm1-h01-workerlt02:
-      ilo_address: 10.242.108.160
+      ilo_address: x.x.x.x
       type: workerlt
     nlup-cci-rtm1-h01-workerlt03:
-      ilo_address: 10.242.108.161
+      ilo_address: x.x.x.x
       type: workerlt
   h01-asd2:
     nlup-cci-asd2-h01-master01:
-      ilo_address: 10.242.109.153
+      ilo_address: x.x.x.x
       type: master
     nlup-cci-asd2-h01-master02:
-      ilo_address: 10.242.109.154
+      ilo_address: x.x.x.x
       type: master
     nlup-cci-asd2-h01-master03:
-      ilo_address: 10.242.109.155
+      ilo_address: x.x.x.x
       type: master
     nlup-cci-asd2-h01-storage01:
-      ilo_address: 10.242.109.156
+      ilo_address: x.x.x.x
       type: storage
     nlup-cci-asd2-h01-storage02:
-      ilo_address: 10.242.109.157
+      ilo_address: x.x.x.x
       type: storage
     nlup-cci-asd2-h01-storage03:
-      ilo_address: 10.242.109.158
+      ilo_address: x.x.x.x
       type: storage
     nlup-cci-asd2-h01-workerlt01:
-      ilo_address: 10.242.109.159
+      ilo_address: x.x.x.x
       type: workerlt
     nlup-cci-asd2-h01-workerlt02:
-      ilo_address: 10.242.109.160
+      ilo_address: x.x.x.x
       type: workerlt
     nlup-cci-asd2-h01-workerlt03:
-      ilo_address: 10.242.109.161
+      ilo_address: x.x.x.x
       type: workerlt

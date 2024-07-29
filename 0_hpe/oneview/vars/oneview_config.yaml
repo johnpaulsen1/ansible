@@ -1,5 +1,5 @@
 ---
-ip: 10.205.8.10
+ip: x.x.x.x
 credentials:
   userName: "{{ vault_ov_user }}"
   password: "{{ vault_ov_password }}"
