@@ -1,0 +1,7 @@
+---
+- name: "Fetch Session ID"
+  hpe.oneview.oneview_get_session_id:
+    config: "{{ oneview_config_file }}"
+    name: "Test_Session"
+  delegate_to: localhost
+  register: session

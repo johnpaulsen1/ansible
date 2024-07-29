@@ -1,0 +1,20 @@
+- name: check install file
+  stat:
+    path: /var/opt/managesoft/log/installation.log
+  register: install_exist
+  no_log: true
+
+- name: "Check installation logfile"
+  shell: grep "Program exited successfully" /var/opt/managesoft/log/installation.log
+  register: install_file
+  when: install_exist.stat.exists
+  no_log: true
+
+- set_fact:
+    install_success: true
+    cacheable: yes
+  when: install_file.rc == 0 and install_exist.stat.exists
+  no_log: true
+
+- name: check tracker logs
+  include: check_tracker.yaml

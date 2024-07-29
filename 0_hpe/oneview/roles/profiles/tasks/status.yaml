@@ -1,0 +1,80 @@
+---
+- name: "Block of tasks that check the status of HPE Server Profile/s"
+  block:
+    - name: "Set ilo_server_profile_names_list param - default"
+      set_fact:
+        ilo_server_profile_names_list: "{{ cci_hpe_servers[cci_cluster].keys() }}"
+      when: hardware_status_task_server_names is not defined
+
+    - name: "Set ilo_server_profile_names_list param - from status task"
+      set_fact:
+        ilo_server_profile_names_list: "{{ hardware_status_task_server_names }}"
+      when: hardware_status_task_server_names is defined
+
+    - name: "Gather facts about Server Profiles in cluster - {{ cci_cluster }}"
+      hpe.oneview.oneview_server_profile_facts:
+        config: "{{ oneview_config_file }}"
+        name: "{{ server_profile_name }}"
+      loop: "{{ ilo_server_profile_names_list }}"
+      loop_control:
+        loop_var: server_profile_name
+      register: server_profile_facts
+      delegate_to: localhost
+      when:
+        - oneview_config_file is defined
+
+    - name: "Show server profile facts"
+      debug:
+        msg:
+          - "profile name = {{ item.ansible_facts.server_profiles[0].name }}"
+          - "template compliance = {{ item.ansible_facts.server_profiles[0].templateCompliance }}"
+          - "firmware consistency = {{ item.ansible_facts.server_profiles[0].firmware.consistencyState }}"
+      loop: "{{ server_profile_facts.results }}"
+      when: server_profile_facts is success
+
+    - name: "Set list fact for Server Profiles that are NOT '{{ required_template_compliance_state }}' with their template or their firmware is NOT '{{ required_firmware_consistency_state }}'"
+      set_fact:
+        server_profiles_template_notok_list: "{{ server_profiles_template_notok_list | default([]) + [item.ansible_facts.server_profiles[0].name | string] }}"
+      when:
+        - server_profile_facts is success
+        - item.ansible_facts.server_profiles[0].name is defined
+        - "item.ansible_facts.server_profiles[0].templateCompliance != required_template_compliance_state"
+      loop: "{{ server_profile_facts.results }}"
+
+    - name: "Show server profile/s that are NOT '{{ required_template_compliance_state }}' with their template"
+      debug:
+        msg: "server profile -> {{ item }}"
+      loop: "{{ server_profiles_template_notok_list }}"
+      when: server_profiles_template_notok_list is defined
+
+    - name: "Set list fact for Server Profiles that where it is found that their firmware is NOT '{{ required_firmware_consistency_state }}'"
+      set_fact:
+        server_profiles_firmware_notok_list: "{{ server_profiles_firmware_notok_list | default([]) + [item.ansible_facts.server_profiles[0].name | string] }}"
+      when:
+        - server_profile_facts is success
+        - item.ansible_facts.server_profiles[0].name is defined
+        - "item.ansible_facts.server_profiles[0].firmware.consistencyState != required_firmware_consistency_state"
+        - item.ansible_facts.server_profiles[0].name not in server_profiles_template_notok_list   # if a server profile is BOTH (UnCompliant with its template and InConsistent with its Firmware) to avoid a profile re-apply when we should do a template update first instead
+      loop: "{{ server_profile_facts.results }}"
+
+    - name: "Show server profile/s that whose Firmware is NOT '{{ required_firmware_consistency_state }}'"
+      debug:
+        msg: "server profile -> {{ item }}"
+      loop: "{{ server_profiles_firmware_notok_list }}"
+      when: server_profiles_firmware_notok_list is defined
+
+    - name: "Run the Server Profile Re-Apply task for Server Profile/s whose Firmware is NOT '{{ required_firmware_consistency_state }}'"
+      include_tasks: reapply.yaml
+      vars:
+        profile_status_task_profiles_firmware_notok_server_names: "{{ server_profiles_firmware_notok_list }}"
+      when:
+        - fix_profile_notok
+        - server_profiles_firmware_notok_list is defined
+
+    - name: "Run the Update from Template task for Server Profile/s that are NOT '{{ required_template_compliance_state }}' with their template"
+      include_tasks: update_from_template.yaml
+      vars:
+        profile_status_task_profiles_template_notok_server_names: "{{ server_profiles_template_notok_list }}"
+      when:
+        - fix_profile_notok
+        - server_profiles_template_notok_list is defined

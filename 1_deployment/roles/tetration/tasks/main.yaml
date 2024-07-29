@@ -1,0 +1,79 @@
+---
+- name: test if rpm package exist
+  shell: rpm -qa | grep tet-sensor
+  register: rpm_installed
+  failed_when: rpm_installed.rc == 1
+  ignore_errors: true
+  changed_when: false
+
+- name: check that tetration version file exists
+  stat:
+    path: /usr/local/tet/conf/version
+  register: tet_version_file
+  ignore_errors: true
+
+- name: get installed tetration version
+  shell: cat {{ tetration_version_file }}
+  register: installed_version
+  when: tet_version_file.stat.exists
+  ignore_errors: true
+  changed_when: false
+
+- name: set fact installed_version to false if tet_version_file does not exist
+  set_fact:
+    installed_version: false
+  when: not tet_version_file.stat.exists
+
+- name: test if tetration is already running
+  shell: ps aux | grep tet-sensor | egrep -v 'grep'
+  register: tet_already_running
+  ignore_errors: true
+  changed_when: false
+
+- name: set fact is_latest to true if tetration is installed and is the latest version
+  set_fact:
+    is_latest: true
+  when: "rpm_installed is success and installed_version.stdout_lines[0] in tetration_latest_version"
+
+- name: set fact is_latest to false if tetration is not installed or if it is installed but is not the latest version
+  set_fact:
+    is_latest: false
+  when: "(rpm_installed is failed or installed_version.stdout_lines[0] not in tetration_latest_version) or (rpm_installed is success and installed_version.stdout_lines[0] not in tetration_latest_version)"
+
+- name: set fact tetration_installed to false if rpm check for tetration failed
+  set_fact:
+    tetration_installed: false
+  when: rpm_installed is failed
+
+- name: set fact tetration_installed to true if rpm check for tetration succeeded
+  set_fact:
+    tetration_installed: true
+  when: rpm_installed is success
+
+- name: set fact tetration_running to false if tetration found to not be running
+  set_fact:
+    tetration_running: false
+  when: tet_already_running is failed
+
+- name: set fact tetration_running to true if tetration found to be running
+  set_fact:
+    tetration_running: true
+  when: tet_already_running is success
+
+- name: set fact remove_tetration to true if rpm_installed is success and is_latest == false
+  set_fact:
+    remove_tetration: true
+  when: rpm_installed is success and is_latest == false
+
+- name: set fact remove_tetration to false if rpm_installed is failed
+  set_fact:
+    remove_tetration: false
+  when: rpm_installed is failed or is_latest == true
+#
+- name: remove if older version found
+  include: remove.yaml
+  when: remove_tetration == true
+
+- name: install tetration
+  include: install.yaml
+  when: tetration_installed == false or is_latest == false

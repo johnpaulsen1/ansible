@@ -1,0 +1,6 @@
+download_url: https://htf-cobbler.fnb.co.za/cobbler/pub/software/netbackup
+install_version: 8.1.2
+install_base: /opt/netbackup
+install_dir: "{{ install_base }}/openv"
+download_dir: "{{ install_base }}/download"
+installer: "{{ download_url }}/NB_{{ install_version }}_{{ ansible_architecture }}_clientinstall.tar"

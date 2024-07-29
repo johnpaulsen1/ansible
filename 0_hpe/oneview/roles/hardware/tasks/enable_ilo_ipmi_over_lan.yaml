@@ -1,0 +1,71 @@
+---
+- name: "Block of tasks to enable IPMI over LAN for the iLO"
+  block:
+    - name: "Set set_ilo_server_names_list param - default"
+      set_fact:
+        set_ilo_server_names_list: "{{ cci_hpe_servers[cci_cluster].keys() }}"
+      when:
+        - ilo_server_names_list_get_ilo_ipmi_task is not defined
+        - ilo_ipmi_server_names_list_hw_task is not defined
+
+    - name: "Set set_ilo_server_names_list param - from get ilo ipmi task"
+      set_fact:
+        set_ilo_server_names_list: "{{ ilo_server_names_list_get_ilo_ipmi_task }}"
+      when:
+        - ilo_server_names_list_get_ilo_ipmi_task is defined
+        - ilo_ipmi_server_names_list_hw_task is not defined
+
+    - name: "Set set_ilo_server_names_list param - from hardware task"
+      set_fact:
+        set_ilo_server_names_list: "{{ ilo_ipmi_server_names_list_hw_task }}"
+      when:
+        - ilo_server_names_list_get_ilo_ipmi_task is not defined
+        - ilo_ipmi_server_names_list_hw_task is defined
+
+    - name: "Set ilo credentials dictionary"
+      include_tasks: set_ilo_credentials_dict.yaml
+      vars:
+        ilo_creds_server_names: "{{ set_ilo_server_names_list }}"
+
+    - name: "Attempting to set / update iLO hostname for the following server/s"
+      debug:
+        msg: "Server - {{ item }}"
+      loop: "{{ set_ilo_server_names_list }}"
+
+    - name: "Set / Update the iLO '{{ required_ipmi_attr }}' for cluster - {{ cci_cluster }}"
+      hpe_ilo_api:
+        ilo_ip: "{{ cci_hpe_servers[cci_cluster][item].ilo_address }}"
+        ilo_uri: /redfish/v1/managers/1/NetworkProtocol/
+        http_request_type: PATCH
+        http_request_body:
+          IPMI:
+            ProtocolEnabled: true
+        ilo_username: "{{ ilo_creds_dict[item].user }}"
+        ilo_password: "{{ ilo_creds_dict[item].password }}"
+      register: enable_ilo_ipmi_over_lan
+      loop: "{{ set_ilo_server_names_list }}"
+      when:
+        - set_ilo_server_names_list is defined
+        - ilo_creds_dict is defined
+
+    - name: "Show the results of the set / update iLO '{{ required_ipmi_attr }}' task"
+      debug:
+        msg: "{{ item }}"
+      loop: "{{ enable_ilo_ipmi_over_lan.results }}"
+      when:
+        - enable_ilo_ipmi_over_lan is success
+
+  rescue:
+    - name: "Failed to set / update the iLO '{{ required_ipmi_attr }}' for cluster - {{ cci_cluster }}"
+      debug:
+        msg: "Failed to set / update the iLO '{{ required_ipmi_attr }}' for cluster - {{ cci_cluster }}"
+      loop: "{{ set_ilo_server_names_list }}"
+      when:
+        - set_ilo_server_names_list is defined
+        - ilo_creds_dict is defined
+
+    - name: "Print the results of the set / update iLO '{{ required_ipmi_attr }}' task"
+      debug:
+        msg: "{{ enable_ilo_ipmi_over_lan }}"
+      when:
+        - enable_ilo_ipmi_over_lan is defined

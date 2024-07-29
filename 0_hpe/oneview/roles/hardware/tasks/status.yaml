@@ -1,0 +1,98 @@
+---
+- name: "Block of tasks that check HPE Server/s State"
+  block:
+    - name: "Gather facts about Server Hardwares in cluster - {{ cci_cluster }}"
+      hpe.oneview.oneview_server_hardware_facts:
+        config: "{{ oneview_config_file }}"
+        name: "{{ server_name }}"
+      loop: "{{ cci_hpe_servers[cci_cluster].keys() }}"
+      loop_control:
+        loop_var: server_name
+      register: server_hardware_facts
+      delegate_to: localhost
+      when:
+        - oneview_config_file is defined
+
+    - name: "Show server hardware facts"
+      debug:
+        msg: "{{ item.ansible_facts.server_hardwares }}"
+      loop: "{{ server_hardware_facts.results }}"
+      when: server_hardware_facts is success
+
+    - name: "Set server state dictionary fact"
+      set_fact:
+        server_state_dict: "{{ server_state_dict | default({}) | combine( {item.ansible_facts.server_hardwares.name: {'state': item.ansible_facts.server_hardwares.state}} ) }}"
+      when:
+        - server_hardware_facts is success
+        - item.ansible_facts.server_hardwares.name is defined
+      loop: "{{ server_hardware_facts.results }}"
+
+    - name: "Set servers not in oneview list fact"
+      set_fact:
+        servers_not_in_oneview_list: "{{ servers_not_in_oneview_list | default([]) + [item.server_name | string] }}"
+      when:
+        - server_hardware_facts is success
+        - item.ansible_facts.server_hardwares.name is not defined
+        - item.server_name is defined
+      loop: "{{ server_hardware_facts.results }}"
+
+    - name: "Servers NOT in OneView"
+      debug:
+        msg:
+          - "{{ item }}"
+      loop: "{{ servers_not_in_oneview_list }}"
+      when: servers_not_in_oneview_list is defined
+
+    - name: "Set server_state_dict_ok param"
+      set_fact:
+        server_state_dict_ok: "{{ server_state_dict_ok | default({}) | combine( {item: {'state': server_state_dict[item].state}} ) }}"
+      loop: "{{ server_state_dict.keys() }}"
+      when:
+        - server_state_dict is defined
+        - server_state_dict[item].state in ok_server_states
+
+    - name: "'Pop' keys from server_state_dict that have 'OK' state"
+      set_fact:
+        server_state_dict: "{{ server_state_dict | ansible.utils.remove_keys(target=[item]) }}"
+      loop: "{{ server_state_dict.keys() }}"
+      when:
+        - server_state_dict is defined
+        - server_state_dict[item].state in ok_server_states
+
+    - name: "Add servers that are NOT in OneView"
+      include_role:
+        name: hardware
+        tasks_from: add.yaml
+      vars:
+        hardware_status_task_server_names: "{{ servers_not_in_oneview_list }}"
+        add_profile: true
+      when:
+        - servers_not_in_oneview_list is defined
+        - add_hardware_if_missing
+
+    - name: "fail block when server/s are not in 'OK' state"
+      shell: "echo {{ item }}; exit 1"
+      loop: "{{ server_state_dict.keys() }}"
+      when:
+        - server_state_dict is defined
+        - server_state_dict[item].state not in ok_server_states
+
+  rescue:
+    - name: "rescue task"
+      debug:
+        msg: "running rescue task for server - {{ item }}"
+      loop: "{{ server_state_dict.keys() }}"
+
+    - name: "Check the status of the server profile for server/s that are NOT in 'OK' state"
+      include_role:
+        name: profiles
+        tasks_from: status.yaml
+      vars:
+        hardware_status_task_server_names: "{{ server_state_dict.keys() }}"
+        fix_profile_notok: true
+      when: fix_server_notok
+
+  always:
+    - name: "cleanup OneView config"
+      include_role:
+        name: cleanup_ov_config

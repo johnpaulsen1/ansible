@@ -1,0 +1,76 @@
+- name: install AD packages
+  yum:
+    name: "{{ sssd_packages }}"
+    state: present
+  with_items: "{{ sssd_packages }}"
+  when: ansible_architecture != "s390x"
+
+- name: install AD packages for Z
+  yum:
+    name: "{{ s390x_sssd_packages }}"
+    state: present
+  with_items: "{{ s390x_sssd_packages }}"
+  when: ansible_architecture == "s390x"
+
+- name: sssd config
+  template:
+    src: sssd_config_template.j2
+    dest: /etc/sssd/sssd.conf
+  with_items:
+    - filter_users
+    - filter_groups
+    - group_list
+    - ldap_default_bind_dn
+    - ldap_default_authtok
+    - ldap_uri
+
+- name: install system-auth-ac
+  copy:
+    src: system-auth-ac
+    dest: /etc/pam.d/system-auth-ac
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: install password-auth-ac
+  copy:
+    src: password-auth-ac
+    dest: /etc/pam.d/password-auth-ac
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: install authconfig
+  copy:
+    src: authconfig
+    dest: /etc/sysconfig/authconfig
+    owner: root
+    group: root
+    mode: '0644'
+  notify: authconfig
+
+- name: install folderOwnership script
+  copy:
+    src: fixFolderOwnership
+    dest: /usr/local/bin/fixFolderOwnership.sh
+    owner: root
+    group: root
+    mode: '0700'
+
+- name: fix file ownership
+  file:
+    path: /etc/sssd/sssd.conf
+    owner: root
+    group: root
+    mode: '0600'
+
+- name: run folderOwnership script
+  shell: /usr/local/bin/fixFolderOwnership.sh
+  notify:
+    - restart sssd
+    - restart oddjob
+    - restart dbus
+    - restart logind
+
+- name: disable pam finger print module
+  shell: authconfig --disablefingerprint --update

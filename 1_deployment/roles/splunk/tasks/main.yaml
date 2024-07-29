@@ -1,0 +1,65 @@
+---
+- name: test if package exist
+  shell: rpm -qa | grep splunkforwarder
+  register: rpm_installed
+  failed_when: rpm_installed.rc == 1
+  ignore_errors: true
+  changed_when: false
+
+- name: test if splunk is already running
+  shell: ps aux | grep splunk | egrep -v 'grep'
+  register: splunk_already_running
+  ignore_errors: true
+  changed_when: false
+
+- name: set fact is_latest to true if splunk is installed and is the latest version
+  set_fact:
+    is_latest: true
+  when: "rpm_installed is success and splunk_latest_version in rpm_installed.stdout_lines[0]"
+
+- name: set fact is_latest to false if splunk is not installed or if it is installed but is not the latest version
+  set_fact:
+    is_latest: false
+  when: "(rpm_installed is failed or splunk_latest_version not in rpm_installed.stdout_lines[0]) or (rpm_installed is success and splunk_latest_version not in rpm_installed.stdout_lines[0])"
+
+- name: set fact splunk_installed to false if rpm check for splunk failed
+  set_fact:
+    splunk_installed: false
+  when: rpm_installed is failed
+
+- name: set fact splunk_installed to true if rpm check for splunk succeeded
+  set_fact:
+    splunk_installed: true
+  when: rpm_installed is success
+
+- name: set fact splunk_running to false if splunk found to not be running
+  set_fact:
+    splunk_running: false
+  when: splunk_already_running is failed
+
+- name: set fact splunk_running to true if splunk found to be running
+  set_fact:
+    splunk_running: true
+  when: splunk_already_running is success
+
+- name: set fact update_splunk to true if rpm_installed is success and is_latest == false
+  set_fact:
+    update_splunk: true
+  when: rpm_installed is success and is_latest == false
+
+- name: set fact update_splunk to false if rpm_installed is failed
+  set_fact:
+    update_splunk: false
+  when: rpm_installed is failed or is_latest == true
+
+- name: update if older version found
+  include: update.yaml
+  when: update_splunk == true
+
+- name: install splunkforwarder
+  include: install.yaml
+  when: update_splunk == false and (splunk_installed == false or is_latest == false)
+
+- name: start splunkforwarder
+  include: start.yaml
+  when: splunk_installed == true and is_latest == true and splunk_running == false

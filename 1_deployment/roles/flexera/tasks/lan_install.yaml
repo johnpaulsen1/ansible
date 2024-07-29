@@ -1,0 +1,29 @@
+- name: vlan check in install
+  debug:
+    msg: "This is a check for LAN"
+  when: vlan == "lan"
+
+- name: create /var/tmp
+  file:
+    path: /var/tmp
+    state: directory
+    mode: '0755'
+
+- name: flexera LAN Host response download
+  get_url:
+    url: "{{ flexera_lan_response }}"
+    dest: /var/tmp/mgsft_rollout_response
+    mode: '0770'
+    validate_certs: false
+
+- name: flexera LAN Host package download
+  get_url:
+    url: "{{ flexera_lan }}"
+    dest: /var/tmp/managesoft.x86_64.rpm
+    mode: '0770'
+    validate_certs: false
+
+- name: flexera host package install
+  yum:
+    name: /var/tmp/managesoft.x86_64.rpm
+    state: present

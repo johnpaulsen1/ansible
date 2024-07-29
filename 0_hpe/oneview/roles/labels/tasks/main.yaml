@@ -1,0 +1,7 @@
+---
+- name: "Gather facts about all Labels"
+  hpe.oneview.oneview_label_facts:
+    config: "{{ oneview_config_file }}"
+  delegate_to: localhost
+
+- debug: var=labels

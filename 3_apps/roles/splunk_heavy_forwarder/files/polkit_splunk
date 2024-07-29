@@ -1,0 +1,15 @@
+ #!/bin/bash -x
+ COMM=($(ps --no-headers -o cmd -p $1))
+
+ if [[ "${COMM[1]}" == "start" ]] ||
+    [[ "${COMM[1]}" == "stop"  ]] ||
+    [[ "${COMM[1]}" == "status"  ]] ||
+    [[ "${COMM[1]}" == "restart" ]]; then
+
+       if [[ "${COMM[2]}" == "splunkd" ]] ||
+          [[ "${COMM[2]}" == "splunkd.service" ]]; then
+           exit 0
+       fi
+ fi
+
+ exit 1

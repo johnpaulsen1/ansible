@@ -1,0 +1,52 @@
+---
+- name: kill splunk if running
+  shell: "pkill -9 -f splunk"
+  register: killed_splunk
+  ignore_errors: true
+  when: splunk_running == true
+
+- name: "download & install splunkforwarder updated version - {{ splunk_latest_version }}"
+  yum:
+    name: "{{ splunk_install_rpm }}"
+    state: present
+  register: download_install_splunk
+  when: rpm_installed is failed or is_latest == false
+
+- name: set fact splunk_updated to true if download and install was successful
+  set_fact:
+    splunk_updated: true
+  when: download_install_splunk is success
+
+- name: "restart splunk while accepting license agreement"
+  shell: /opt/splunkforwarder/bin/splunk restart --accept-license --answer-yes --no-prompt
+  ignore_errors: yes
+  when: splunk_updated == true
+
+- name: "check splunk updated version"
+  shell: /opt/splunkforwarder/bin/splunk version
+  register: splunk_version_check
+  ignore_errors: yes
+  when: splunk_updated == true
+
+- name: "display splunk version check"
+  debug:
+    msg: "{{ splunk_version_check.stdout_lines }}"
+  ignore_errors: yes
+  when: splunk_version_check is success
+
+- name: "sleep of 5 seconds"
+  shell: sleep 5
+  when: splunk_updated == true
+  ignore_errors: yes
+
+- name: "check splunk updated status"
+  shell: /opt/splunkforwarder/bin/splunk status
+  register: splunk_status_check
+  ignore_errors: yes
+  when: splunk_updated == true
+
+- name: "display splunk status check"
+  debug:
+    msg: "{{ splunk_status_check.stdout_lines }}"
+  ignore_errors: yes
+  when: splunk_status_check is success

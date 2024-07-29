@@ -1,0 +1,19 @@
+# This file is being maintained by Ansible.
+# DO NOT EDIT
+# Contact MidrangeLinux@fnb.co.za
+
+{% if vlan == 'lan' %}
+AUTHORIZATION_TOKEN={{ lan_authorization_token }}
+CA_CERTIFICATE_FINGERPRINT={{ lan_ca_certificate_fingerprint }}
+{% elif vlan == 'dmz' %}
+AUTHORIZATION_TOKEN={{ dmz_authorization_token }}
+CA_CERTIFICATE_FINGERPRINT={{ dmz_ca_certificate_fingerprint }}
+{% elif vlan == 'pci' %}
+AUTHORIZATION_TOKEN={{ pci_authorization_token }}
+CA_CERTIFICATE_FINGERPRINT={{ pci_ca_certificate_fingerprint }}
+{% else %}
+# VLAN is not catered by Ansible.
+AUTHORIZATION_TOKEN=SKIP
+CA_CERTIFICATE_FINGERPRINT=SKIP
+{% endif %}
+CLIENT_NAME={{ client_name }}

@@ -1,0 +1,68 @@
+---
+
+## Checks if install esmsetup file is there
+- name: Check if CCS esmsetup files exists
+  stat:
+    path: /tmp/ccsagent/x64/esm120/esmsetup
+  register: ccs_esmsetup_file
+
+## Checks if install esm.tgz file is there
+- name: Check if CCS esm.tgz files exists
+  stat:
+    path: /tmp/ccsagent/x64/esm120/esm.tgz
+  register: ccs_esmtgz_file
+
+## Checks if install ccs.tpk file is there
+- name: Check if CCS ccs.tpk files exists
+  stat:
+    path: /tmp/ccsagent/x64/esm120/su/ccs.tpk
+  register: ccs_ccstpk_file
+
+##  Clean up /tmp/ccsagent if missing install files
+- name: clean out /tmp/ccsagent directory where necessary
+  file:
+    path: /tmp/ccsagent
+    state: absent
+  when: not ccs_esmsetup_file.stat.exists or not ccs_esmtgz_file.stat.exists or not ccs_ccstpk_file.stat.exists
+  ignore_errors: true
+
+- name: Check if CCS software installed
+  stat:
+    path: /opt/symantec/esm
+  register: file_ccsinstall
+
+## Grab install file and extract it, if software is not installed
+- name: Get install from cobbler and extract
+  unarchive:
+    src: "http://htf-cobbler/cobbler/pub/software/ccs/ccsagent_120.tgz"
+    dest: /tmp/
+    remote_src: true
+  register: new_archive
+  when: not ccs_esmsetup_file.stat.exists or not ccs_esmtgz_file.stat.exists or not ccs_ccstpk_file.stat.exists
+
+## Do the install if its required
+- name: Install CCS from tarball
+  command: /tmp/ccsagent/x64/esm120/esmsetup -ibaE -p 1,2,3,4,5,6,7,8,9,10,11,12,13,14 -M 10.5.10.6 -d /opt/ -t /tmp/ccsagent/x64/esm120/esm.tgz -N {{ inventory_hostname }} -C /tmp/ccsagent/x64/esm120/su/ccs.tpk -K /tmp/ccsagent/x64/esm120/su/ccs.tpk
+  when: not file_ccsinstall.stat.exists
+
+## Whether installed now or not, check if the process is running
+- name: Check if CCS (esmd) is running
+  shell: ps aux | grep esmd | grep -v grep
+  changed_when: false
+  ignore_errors: true
+  register: service_esmd_status
+  tags:
+    - css_running
+
+- name: show esmd proc
+  debug:
+    msg: "{{ service_esmd_status.stdout_lines }}"
+  when: service_esmd_status is success
+  tags:
+    - css_running
+
+## If software is installed, it should be running
+- name: Start CCS (esmd)
+  command: /esm/bin/lnx-x64/esmd -fv
+  changed_when: false
+  when: service_esmd_status is failed and file_ccsinstall.stat.exists

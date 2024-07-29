@@ -1,0 +1,66 @@
+### Check if its installed already or not.
+
+### tmc_daemon ###
+- name: check if tmc_daemon package exists
+  shell: rpm -qa | grep tmc_daemon
+  register: tmc_daemon_found
+  ignore_errors: true
+  changed_when: false
+
+- name: check if tmc_daemon package is latest
+  shell: "rpm -qa tmc_daemon | grep {{ tmc_version }}"
+  register: check_tmc_daemon_latest_version
+  when: tmc_daemon_found is success
+  ignore_errors: true
+  changed_when: false
+
+- name: tmc_daemon package not found result
+  debug:
+    msg: "TMC daemon is not installed."
+  when: tmc_daemon_found is failed
+  ignore_errors: true
+
+- name: tmc_daemon package not latest version result
+  debug:
+    msg: "TMC daemon is not the latest version."
+  when: check_tmc_daemon_latest_version is failed
+  ignore_errors: true
+
+- name: tmc_daemon package is latest
+  debug:
+    msg: "TMC daemon installed and latest."
+  when: tmc_daemon_found is success and check_tmc_daemon_latest_version is success
+  ignore_errors: true
+
+- name: Install the tmc rpm from a remote repo
+  yum:
+    name: "{{ tmc_package }}"
+    state: present
+    disable_gpg_check: yes
+    validate_certs: no
+  when: tmc_daemon_found is failed or check_tmc_daemon_latest_version is failed
+  ignore_errors: true
+
+- name: Create log file
+  file:
+    path: "{{ tmc_log }}"
+    owner: root
+    group: root
+    mode: '0770'
+    state: touch
+
+- name: enable tmc service
+  systemd:
+    name: tmc_daemon.service
+    enabled: yes
+    daemon_reload: yes
+  when: tmc_daemon_found is failed or check_tmc_daemon_latest_version is failed
+  ignore_errors: true
+
+- name: restart tmc service
+  systemd:
+    state: restarted
+    name: tmc_daemon.service
+  when: tmc_daemon_found is failed or check_tmc_daemon_latest_version is failed
+  ignore_errors: true
+######################

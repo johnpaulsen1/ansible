@@ -1,0 +1,22 @@
+- name: Upgrade existing install
+  debug: 
+    msg: "Server is in {{ vlan }}"
+
+- name: remove old version
+  yum:
+    name: BESAgent
+    state: absent
+
+- name: remove BESClient dir
+  file:
+    path: /etc/opt/BESClient
+    state: absent
+
+- name: remove BESClient dir (DMZ)
+  file:
+    path: /var/opt/BESClient
+    state: absent
+  when: vlan == "dmz"
+  
+- name: install the client
+  include: install.yaml

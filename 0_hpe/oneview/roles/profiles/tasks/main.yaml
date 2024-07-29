@@ -1,0 +1,20 @@
+---
+- name: "List HPE OneView server profiles"
+  include_tasks: list.yaml
+  when: list_profiles
+
+- name: "Add HPE OneView server profile"
+  include_tasks: add.yaml
+  when: add_profile
+
+- name: "Get HPE OneView server profile/s"
+  include_tasks: get.yaml
+  when: get_profile
+
+- name: "Status HPE OneView server profile/s"
+  include_tasks: status.yaml
+  when: status_profile
+
+- name: "Re-Apply HPE OneView server profile/s"
+  include_tasks: reapply.yaml
+  when: reapply_profile

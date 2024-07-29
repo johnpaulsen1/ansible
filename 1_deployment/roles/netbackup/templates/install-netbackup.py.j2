@@ -1,0 +1,37 @@
+{% if ansible_distribution == 'RedHat' and ansible_distribution_major_version == '8' %}
+#!/usr/bin/python3
+{% else %}
+#!/usr/bin/python2
+{% endif %}
+
+import pexpect,os,sys
+
+##########################################
+# Written by Merritt Krakowitzer
+# mkrakowitzer@fnb.co.za
+# If it breaks you get to keep both pieces
+# Version 6 June 2012
+# Modified by Rudresh Korgaonkar
+# rudresh.korgaonkar@fnb.co.za
+# Version 14 June 2021
+##########################################
+
+def install_netbackup():
+  os.chdir('{{ download_dir }}')
+  child = pexpect.spawn('./install', timeout=300)
+{% if ansible_distribution == 'RedHat' and ansible_distribution_major_version == '8' %}
+  fout = open('{{ install_base }}/install.log','wb')
+{% else %}
+  fout = file('{{ install_base }}/install.log','w')
+{% endif %}
+  child.logfile = fout
+  child.expect ('Do you wish to continue')
+  child.sendline ('y')
+  child.expect ('Do you want to install the NetBackup client software for this client')
+  child.sendline ('y')
+  child.expect ('That file can be deleted after you are sure the install was successful')
+
+def main():
+  install_netbackup()
+
+main()

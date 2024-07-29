@@ -1,0 +1,2 @@
+splunk_url: http://htf-cobbler.fnb.co.za/cobbler/pub/software/splunk
+splunk_heavy_forwarder_install: 'splunk-8.0.1-6db836e2fb9e-Linux-x86_64.tgz'

@@ -1,0 +1,26 @@
+---
+- name: kill tetration if running
+  shell: "pkill -9 -f {{ item }}"
+  register: killed_tetration
+  with_items:
+    - "{{ tetration_procs }}"
+  ignore_errors: true
+  when: tetration_running == true
+
+- name: remove tetration package
+  yum:
+    name: "{{ tetration_rpms }}"
+    state: absent
+  register: uninstall_tetration
+  ignore_errors: true
+
+- set_fact:
+    tetration_uninstalled: true
+  when: uninstall_tetration is success
+
+- name: remove tetration version file
+  file:
+    path: "/usr/local/tet"
+    state: absent
+  ignore_errors: true
+  when: tetration_uninstalled == true

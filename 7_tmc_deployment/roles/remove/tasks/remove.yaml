@@ -1,0 +1,22 @@
+### Check if its installed already or not.
+
+### tmc_daemon ###
+- name: check if tmc_daemon package exists
+  shell: rpm -qa | grep tmc_daemon
+  register: tmc_daemon_found
+  ignore_errors: true
+  changed_when: false
+
+- name: tmc_daemon package not found result
+  debug:
+    msg: "TMC daemon is not installed."
+  when: tmc_daemon_found is failed
+  ignore_errors: true
+
+- name: Remove tmc_daemon
+  yum:
+    name: "tmc_daemon"
+    state: absent
+  when: tmc_daemon_found is success
+  ignore_errors: true
+######################

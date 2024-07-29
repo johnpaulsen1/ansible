@@ -1,0 +1,17 @@
+---
+- name: check ccs port 5600
+  wait_for:
+    host: 10.5.10.6
+    port: 5600
+    state: started
+    delay: 0
+    timeout: 3
+  ignore_errors: yes
+  register: port_check
+
+- debug:
+    var: port_check
+
+- name: install ccs
+  include: ccs_deploy.yaml
+  when: port_check['failed'] == false and ansible_architecture != 's390x'

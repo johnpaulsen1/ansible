@@ -1,0 +1,4 @@
+---
+- name: "unable to proceed"
+  debug:
+    msg: "unable to proceed, {{ inventory_hostname }} is subscribed to {{ check_sub.stdout }}, please fix..."

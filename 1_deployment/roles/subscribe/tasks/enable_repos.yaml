@@ -1,0 +1,6 @@
+---
+- name: enable repos
+  shell: subscription-manager repos
+
+- name: repolist
+  shell: yum repolist enabled

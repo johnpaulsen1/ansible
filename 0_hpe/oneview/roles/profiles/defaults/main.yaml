@@ -1,0 +1,13 @@
+---
+list_profiles: false
+add_profile: false
+get_profile: false
+reapply_profile: false
+status_profile: false
+update_profile_from_status: false
+reapply_data_str: '[{"op" : "replace", "path" : "/firmware/reapplyState", "value" : "ApplyPending"}, {"op" : "replace", "path" : "/serverHardwareReapplyState", "value" : "ApplyPending"}, {"op" : "replace", "path" : "/bios/reapplyState", "value" : "ApplyPending"}, {"op" : "replace", "path" : "/managementProcessor/reapplyState", "value" : "ApplyPending"}]'
+required_template_compliance_state: "Compliant"
+required_firmware_consistency_state: "Consistent"
+fix_profile_notok: false
+server_profiles_template_notok_list: []
+server_profiles_firmware_notok_list: []

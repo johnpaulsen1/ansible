@@ -1,0 +1,24 @@
+---
+
+- hosts: "{{ hosts | default('all') }}"
+  user: "{{ user }}"
+  become: true
+  become_user: root
+  gather_facts: true
+  serial: 20
+
+  roles:
+    - { role: lan_or_dmz, tags: ['lan_or_dmz','netbackup','ilmt','flexera','subscribe','deploy'] }
+    - { role: subscribe, tags: [ 'subscribe','deploy'] }
+    - { role: packages, tags: [ 'packages','deploy'] }
+    - { role: ad_auth, tags: ['ad_auth','deploy'] }
+    - { role: ilmt, tags: [ 'ilmt','deploy'] }
+    - { role: ccs, tags: [ 'ccs','deploy'] }
+    - { role: flexera, tags: [ 'flexera','deploy'] }
+    - { role: tetration, tags: [ 'tetration','deploy'] }
+    - { role: splunk, tags: [ 'splunk','deploy'] }
+    - { role: netbackup, tags: ['netbackup','deploy'] }
+    - { role: update, tags: [ 'update','deploy'] }
+    - { role: tmc, tags: [ 'tmc','deploy'] }
+    #- {role: clamav, tags: ['clamav','deploy']}
+    #- {role: check_mk, tags: ['check_mk','deploy']}

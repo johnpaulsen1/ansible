@@ -1,0 +1,12 @@
+---
+- hosts: "{{ hosts | default('all') }}"
+  user: f5013135
+  become: true
+  become_user: root
+  gather_facts: false
+  ignore_errors: true
+  serial: 20
+
+  tasks:
+    - name: reboot
+      reboot: 

@@ -1,0 +1,125 @@
+---
+- name: check if netbackup packages are installed
+  yum:
+    name: "{{ netbackup_packages }}"
+    state: present
+  with_items:
+    - "{{ netbackup_packages }}"
+  register: packages_log
+  ignore_errors: true
+
+- name: check symlink required for installer
+  stat:
+    path: /usr/openv
+  register: symlinks_log
+
+- name: print results of symlink checks
+  debug:
+    msg: "/usr/openv link exists"
+  when: symlinks_log.stat.islnk is defined and symlinks_log.stat.islnk
+
+- name: check if /usr/openv/netbackup exists
+  stat:
+    path: /usr/openv/netbackup
+  register: netbackup_dir_log
+
+- name: check if /usr/openv/netbackup/bp.conf exists
+  stat:
+    path: /usr/openv/netbackup/bp.conf
+  register: bp_conf_log
+
+- name: check token using nbcertcmd
+  command: "/usr/openv/netbackup/bin/nbcertcmd -hostselfcheck"
+  register: nbcertcmd_log
+  ignore_errors: true
+
+- name: print results of nbcertcmd checks
+  debug:
+    msg: "{{ 'Authorization token validation failed with ' ~ nbcertcmd_log.msg if nbcertcmd_log.failed else 'Authorization token is valid' }}"
+
+- name: clean up existing netbackup packages
+  yum:
+    name: "{{ netbackup_packages }}"
+    state: absent
+  with_items:
+    - "{{ netbackup_packages }}"
+  when:
+    - symlinks_log.stat.exists and symlinks_log.stat.isdir == true and symlinks_log.stat.islnk == false
+    - nbcertcmd_log.msg is search("No such file or directory") or nbcertcmd_log.stderr
+  notify:
+    - clean up existing netbackup directories
+    - clean up existing netbackup files
+  changed_when: true
+
+- name: flush handlers
+  meta: flush_handlers
+
+- name: create directories required for installer
+  file:
+    path: "{{ item }}"
+    state: directory
+  with_items:
+    - "{{ netbackup_dirs }}"
+  when: nbcertcmd_log.rc != 0
+
+- name: check space available in "{{ install_base }}"
+  shell: df -Pk "{{ install_base }}" | awk '!/Filesystem/ {print $4}'
+  changed_when: false
+  check_mode: no
+  register: install_base_space_available
+  when: nbcertcmd_log.rc != 0
+
+- name: fail when space not available in "{{ install_base }}"
+  debug:
+    msg: Not enough space available in "{{ install_base }}" - only {{ install_base_space_available.stdout | int / 1024 }} MB
+  when: nbcertcmd_log.rc != 0 and install_base_space_available.stdout | int < 4*1024*1024
+
+- name: create symlink required for installer
+  file:
+    src: "{{ install_dir }}"
+    dest: /usr/openv
+    state: link
+    force: yes
+  ignore_errors: true
+  when: nbcertcmd_log.rc != 0
+  changed_when: nbcertcmd_log.rc != 0 or netbackup_dir_log.stat.exists == false
+  notify:
+    - create netbackup directory
+
+- name: flush handlers
+  meta: flush_handlers
+
+- name: download installer
+  unarchive:
+    src: "{{ installer }}"
+    dest: "{{ download_dir }}"
+    remote_src: yes
+    validate_certs: no
+  when: nbcertcmd_log.rc != 0
+  changed_when: nbcertcmd_log.rc != 0 or bp_conf_log.stat.exists == false
+  notify:
+    - create install-netbackup.py file
+    - create NBInstallAnswer.conf file
+    - create bp.conf file
+    - create exclude_list file
+
+- name: flush handlers
+  meta: flush_handlers
+
+- name: run the installer
+  shell: "/usr/local/bin/install-netbackup.py {{ download_dir }}"
+  register: install_log
+  when: nbcertcmd_log.rc != 0
+  notify:
+    - print installer logs
+    - check installer logs for token issues
+    - check installer logs for general failures
+
+- name: flush handlers
+  meta: flush_handlers
+
+- name: clean up installer
+  file:
+    path: "{{ download_dir }}"
+    state: absent
+  when: nbcertcmd_log.rc != 0

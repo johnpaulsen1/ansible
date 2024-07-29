@@ -1,0 +1,8 @@
+---
+# 7.5.04 Is telnet Client remove
+# Double check with BU
+- name: Remove the telnet package.
+  yum:
+    name: telnet
+    state: absent
+  ignore_errors: yes

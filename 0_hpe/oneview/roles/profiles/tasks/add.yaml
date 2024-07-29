@@ -1,0 +1,93 @@
+---
+- name: "Block of tasks to add Server Profile/s"
+  block:
+    - name: "Gather facts about all Scopes"
+      hpe.oneview.oneview_scope_facts:
+        config: "{{ oneview_config_file }}"
+      delegate_to: localhost
+      when: oneview_config_file is defined
+
+    - name: "Set profile_add_task_server_names_list param - default"
+      set_fact:
+        profile_add_task_server_names_list: "{{ cci_hpe_servers[cci_cluster].keys() }}"
+      when: hardware_add_task_server_names is not defined
+
+    - name: "Set profile_add_task_server_names_list param - from status task"
+      set_fact:
+        profile_add_task_server_names_list: "{{ hardware_add_task_server_names }}"
+      when: hardware_add_task_server_names is defined
+
+    - name: "Attempting to add Server Profile/s for cluster - {{ cci_cluster }}"
+      debug:
+        msg:
+          - "server - {{ item }}"
+          - "server profile template - {{ server_profile_templates[cci_cluster][cci_hpe_servers[cci_cluster][item].type] }}"
+          - "description - {{ server_profile_templates[cci_cluster][cci_hpe_servers[cci_cluster][item].type] }} {{ item[-2:] }}"
+          - "initial scope uri - {{ scopes[0].uri }}"
+      loop: "{{ profile_add_task_server_names_list }}"
+      when: cci_hpe_servers is defined
+
+    - name: "Adding Sever Profile/s - Async task"
+      hpe.oneview.oneview_server_profile:
+        config: "{{ oneview_config_file }}"
+        state: present
+        auto_assign_server_hardware: false
+        data:
+          serverProfileTemplateName: "{{ server_profile_templates[cci_cluster][cci_hpe_servers[cci_cluster][item].type] }}"
+          name: "{{ item }}"
+          description: "{{ server_profile_templates[cci_cluster][cci_hpe_servers[cci_cluster][item].type] }} {{ item[-2:] }}"
+          serverHardwareName: "{{ item }}"
+          initialScopeUris:
+            - "{{ scopes[0].uri }}"
+      async: 7200   # 2 hours
+      poll: 0   # fire and forget
+      loop: "{{ profile_add_task_server_names_list }}"
+      register: add_server_profile
+      delegate_to: localhost
+      when:
+        - oneview_config_file is defined
+        - cci_hpe_servers is defined
+
+    - name: "Wait for async task (Add server profile/s) to complete"
+      async_status:
+        jid: "{{ item.ansible_job_id }}"
+      register: add_server_profile_async_watch_task
+      until: add_server_profile_async_watch_task.finished
+      retries: 1440   # covers the 2 hours (5 x 1440 = 7200 seconds)
+      delay: 5  # seconds
+      loop: "{{ add_server_profile.results }}"
+      when: add_server_profile.changed
+
+    - name: "Clean up async files"
+      async_status:
+        jid: "{{ item.ansible_job_id }}"
+        mode: cleanup
+      loop: "{{ add_server_profile.results }}"
+      when: add_server_profile_async_watch_task is success
+
+  rescue:
+    - name: "Block of tasks that handle the rescue of the add HPE Server/s Profile tasks"
+      block:
+        - name: "Attempt to issue a re-apply of Server Profile/s if adding og profile failed"
+          debug:
+            msg: "Attempting to re-apply server profile - {{ item.item.item }}"
+          loop: "{{ add_server_profile_async_watch_task.results }}"
+          when: item.failed
+
+        - name: "Set list of server profiles that failed during their add profile task"
+          set_fact:
+            server_profiles_add_profile_failed: "{{ server_profiles_add_profile_failed | default([]) + [item.item.item] }}"
+          loop: "{{ add_server_profile_async_watch_task.results }}"
+          when: item.failed
+
+        - name: "Show server profile/s that failed during their profile add task"
+          debug:
+            msg: "Server Profile - {{ item }}"
+          loop: "{{ server_profiles_add_profile_failed }}"
+          when: server_profiles_add_profile_failed is defined
+
+        - name: "Run task to attempt to re-apply Server Profile/s that failed during their profile add task"
+          include_tasks: reapply.yaml
+          vars:
+            add_server_profile_failed_servers: "{{ server_profiles_add_profile_failed }}"
+          when: server_profiles_add_profile_failed is defined

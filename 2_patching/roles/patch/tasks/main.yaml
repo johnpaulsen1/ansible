@@ -1,0 +1,14 @@
+---
+- name: "check satellite subscription"
+  shell: subscription-manager config | grep -w hostname
+  register: check_sub
+  changed_when: false
+  ignore_errors: true
+
+- name: proceed to patch
+  include: patch_it.yaml
+  when: "'rhsat' not in check_sub.stdout"
+
+- name: subscription needs fixing
+  include: cant_patch_it.yaml
+  when: "'rhsat' in check_sub.stdout"

@@ -1,0 +1,7 @@
+defaults:
+  ndtask_running: false
+  mgsusageag_running: false
+  install_success: false
+  tracker_success: false
+  policy_success: false
+  upload_success: false

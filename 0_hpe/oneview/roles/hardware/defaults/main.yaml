@@ -1,0 +1,19 @@
+---
+list_servers: false
+add_servers: false
+add_hardware_if_missing: false
+add_profile: false
+cci_cluster: None
+power_state: None
+power_all: false
+add_servers_task: false
+use_default_ilo_creds: false
+status_all: false
+status_check: false
+reapply_profile: false
+get_ilo_hostname: false
+update_ilo_hostnames: false
+fix_server_notok: false
+get_ilo_ipmi: false
+required_ipmi_attr: "'ProtocolEnabled': True"
+enable_ilo_ipmi: false

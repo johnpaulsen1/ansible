@@ -1,0 +1,5 @@
+ilmt_install_zlinux: https://htf-cobbler.fnb.co.za/cobbler/pub/software/ilmt/BESAgent-10.0.3.66-rhel.s390x.rpm
+ilmt_install_x64: https://htf-cobbler.fnb.co.za/cobbler/pub/software/ilmt/BESAgent-10.0.3.66-rhel.x86_64.rpm
+ilmt_lan_masthead: https://htf-cobbler.fnb.co.za/cobbler/pub/software/ilmt/NONDMZ/masthead.afxm
+ilmt_dmz_masthead: https://htf-cobbler.fnb.co.za/cobbler/pub/software/ilmt/DMZ/masthead.afxm
+ilmt_dmz_besclient: https://htf-cobbler.fnb.co.za/cobbler/pub/software/ilmt/DMZ/besclient.config

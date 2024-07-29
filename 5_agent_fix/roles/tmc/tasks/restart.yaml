@@ -1,0 +1,33 @@
+---
+- name: restart tmc service
+  systemd:
+    state: restarted
+    name: tmc_daemon.service
+    daemon_reload: yes
+    enabled: yes
+  register: restart_tmc
+  ignore_errors: true
+
+- name: stop tmc service
+  systemd:
+    state: stopped
+    name: tmc_daemon.service
+  when: restart_tmc is failed and tmc_daemon_found is failed or check_tmc_daemon_latest_version is failed
+  ignore_errors: true
+
+- name: remove pid lock file
+  file:
+    path: "{{ item }}"
+    state: absent
+  with_items:
+    - /var/run/tmc.pid.lock
+    - /tmp/tmc.pid.lock
+  when: restart_tmc is failed and tmc_daemon_found is failed or check_tmc_daemon_latest_version is failed
+  ignore_errors: true
+
+- name: restart tmc service - again
+  systemd:
+    state: restarted
+    name: tmc_daemon.service
+  when: restart_tmc is failed and tmc_daemon_found is failed or check_tmc_daemon_latest_version is failed
+  ignore_errors: true

@@ -1,0 +1,48 @@
+---
+# - name:
+#   debug:
+#     msg: "gonna patch it {{ inventory_hostname }} ..."
+
+- name: "get kernel before"
+  shell: rpm -qa | grep kernel
+  args:
+    warn: false
+  register: get_kernel_before
+  changed_when: false
+  ignore_errors: true
+
+- name: "display kernel version check BEFORE update"
+  debug:
+    msg: "{{ get_kernel_before.stdout }}"
+  when: get_kernel_before is success
+
+- name: "check if yum running"
+  shell: ps aux | grep yum | grep -v grep
+  register: yum_check
+  changed_when: false
+  ignore_errors: true
+
+- name: "kill running yum procs"
+  shell: ps aux | grep yum | grep -v grep | awk '{print $2}' | xargs kill -9
+  register: kill_yum
+  ignore_errors: true
+  when: yum_check is success
+
+- name: "yum update"
+  shell: "yum update --exclude=puppet* --exclude=docker* --exclude=mysql* --exclude=rabbitmq* --exclude=postgres* --exclude=mongodb* --exclude=zabbix* --exclude=*sql* --exclude=erlang* -y"
+  args:
+    warn: false
+  register: yum_update
+
+- name: "get kernel after"
+  shell: rpm -qa | grep kernel
+  args:
+    warn: false
+  register: get_kernel_after
+  changed_when: false
+  ignore_errors: true
+
+- name: "display kernel version check AFTER update"
+  debug:
+    msg: "{{ get_kernel_after.stdout }}"
+  when: get_kernel_after is success

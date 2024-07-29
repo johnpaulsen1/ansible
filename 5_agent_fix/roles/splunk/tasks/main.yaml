@@ -1,0 +1,15 @@
+- name: "set BU var"
+  set_fact:
+    bu_name: "{{ bu_name }}"
+
+- name: "run splunk remove for BU {{ bu_name }}"
+  include: "{{ bu_name }}_splunk_{{ do_task }}.yaml"
+  when: "do_task == 'fix'"
+
+- name: "run splunk stop for BU {{ bu_name }}"
+  include: "{{ bu_name }}_splunk_{{ do_task }}.yaml"
+  when: "do_task == 'stop'"
+
+- name: "clean I&SS splunk for BU {{ bu_name }}"
+  include: "{{ bu_name }}_splunk_{{ do_task }}.yaml"
+  when: "do_task == 'clean_siem'"

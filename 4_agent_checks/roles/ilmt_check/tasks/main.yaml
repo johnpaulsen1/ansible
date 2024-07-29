@@ -1,0 +1,29 @@
+- name: check if package is installed
+  shell: rpm -qa | grep -i besagent
+  register: package_result
+
+- set_fact:
+    installed: true
+    cacheable: yes
+  when: package_result.rc == 0
+
+- set_fact:
+    installed: false
+    cacheable: yes
+  when: package_result.rc == 1
+
+- debug:
+    msg: "ILMT not installed"
+  when: installed == false
+
+- debug:
+    msg: "ILMT installed"
+  when: installed == true
+
+- name: check service is running
+  block:
+    - debug: msg="checking if service is running"
+    - shell: /etc/init.d/besclient status
+  rescue:
+    - debug: msg="service is not running"
+    - shell: /etc/init.d/besclient start

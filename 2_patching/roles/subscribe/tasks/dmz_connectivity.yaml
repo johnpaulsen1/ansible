@@ -1,0 +1,34 @@
+---
+- name: test connectivity to capsules - DMZ
+  wait_for:
+    host: "{{ item }}"
+    port: 443
+    state: started
+    delay: 1
+    timeout: 10
+  with_random_choice:
+    - "cts-rbcapsule01.fnb.co.za"
+    - "cts-rbcapsule02.fnb.co.za"
+    - "cts-rbcapsule03.fnb.co.za"
+    #- "cts-rbcapsule04.fnb.co.za"
+  register: dmz_result
+  ignore_errors: true
+
+- debug:
+    var: dmz_result.results[0]['item']
+
+- debug:
+    var: dmz_result.results[0]['invocation']['module_args']['host']
+
+- debug:
+    var: dmz_result.results[0]['state']
+
+- name: set subscription host
+  set_fact:
+    subscription_host: "{{ dmz_result.results[0]['invocation']['module_args']['host'] }}"
+    cacheable: yes
+
+- name: prep
+  include: prep.yaml
+  when: dmz_result.results[0]['invocation']['module_args']['state'] == "started"
+  ignore_errors: true

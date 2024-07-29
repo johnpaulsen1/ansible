@@ -1,0 +1,12 @@
+---
+- name: "Session playbook"
+  debug:
+    msg: "Running the session main.yaml playbook"
+
+- name: "Get HPE OneView session"
+  include_tasks: login.yaml
+  when: oneview_login
+
+- name: "Logout HPE OneView session"
+  include_tasks: logout.yaml
+  when: oneview_logout

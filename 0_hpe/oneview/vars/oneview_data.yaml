@@ -1,0 +1,342 @@
+---
+oneview_appliance: oneview.itservices.lan
+
+mgt_domain: mgt.itservices.lan
+licensing_intent: OneView
+configuration_state: Managed
+power_control: MomentaryPress
+
+ok_server_states:
+  - Monitored
+  - NoProfileApplied
+  - ProfileApplied
+
+server_profile_templates:
+  w01-rtm2:
+    provisioning: CCI RHEL Reflab Provisioning Server
+    workerlt: CCI OCP Reflab WorkerLT Server
+    workerht: CCI OCP Reflab WorkerHT Server
+    infra: CCI OCP Reflab Infra Server
+    master: CCI OCP Reflab Master Server
+    storage: CCI OCP Reflab Storage Server
+  w01-zl:
+    provisioning: CCI RHEL Zwolle Provisioning Server
+    workerlt: CCI OCP Zwolle WorkerLT Server
+    workerht: CCI OCP Zwolle WorkerHT Server
+    infra: CCI OCP Zwolle Infra Server
+    master: CCI OCP Zwolle Master Server
+    storage: CCI OCP Zwolle Storage Server
+  w01-rtm1:
+    provisioning: CCI RHEL RTM1 Provisioning Server
+    workerlt: CCI OCP RTM1 WorkerLT Server
+    workerht: CCI OCP RTM1 WorkerHT Server
+    infra: CCI OCP RTM1 Infra Server
+    master: CCI OCP RTM1 Master Server
+    storage: CCI OCP RTM1 Storage Server
+  h01-rtm1:
+    workerlt: CCI OCP RTM1 HUB WorkerLT Server
+    master: CCI OCP RTM1 HUB Master Server
+    storage: CCI OCP RTM1 HUB Storage Server
+  w01-asd2:
+    provisioning: CCI RHEL ASD2 Provisioning Server
+    workerlt: CCI OCP ASD2 WorkerLT Server
+    workerht: CCI OCP ASD2 WorkerHT Server
+    infra: CCI OCP ASD2 Infra Server
+    master: CCI OCP ASD2 Master Server
+    storage: CCI OCP ASD2 Storage Server
+  h01-asd2:
+    workerlt: CCI OCP ASD2 HUB WorkerLT Server
+    master: CCI OCP ASD2 HUB Master Server
+    storage: CCI OCP ASD2 HUB Storage Server
+
+cci_clusters:
+  - w01-rtm2
+  - w01-zl
+  - w01-rtm1
+  - w01-asd2
+  - h01-rtm1
+  - h01-asd2
+
+cci_hpe_servers:
+  w01-rtm2:
+    nlul-cci-rtm2-w01-provisioning01:
+      ilo_address: 10.250.161.4
+      type: provisioning
+    nlul-cci-rtm2-w01-master01:
+      ilo_address: 10.250.161.11
+      type: master
+    nlul-cci-rtm2-w01-master02:
+      ilo_address: 10.250.161.12
+      type: master
+    nlul-cci-rtm2-w01-master03:
+      ilo_address: 10.250.161.13
+      type: master
+    nlul-cci-rtm2-w01-storage01:
+      ilo_address: 10.250.161.14
+      type: storage
+    nlul-cci-rtm2-w01-storage02:
+      ilo_address: 10.250.161.15
+      type: storage
+    nlul-cci-rtm2-w01-storage03:
+      ilo_address: 10.250.161.16
+      type: storage
+    nlul-cci-rtm2-w01-infra01:
+      ilo_address: 10.250.161.17
+      type: infra
+    nlul-cci-rtm2-w01-infra02:
+      ilo_address: 10.250.161.18
+      type: infra
+    nlul-cci-rtm2-w01-infra03:
+      ilo_address: 10.250.161.19
+      type: infra
+    nlul-cci-rtm2-w01-workerlt01:
+      ilo_address: 10.250.161.20
+      type: workerlt
+    nlul-cci-rtm2-w01-workerlt02:
+      ilo_address: 10.250.161.21
+      type: workerlt
+    nlul-cci-rtm2-w01-workerlt03:
+      ilo_address: 10.250.161.22
+      type: workerlt
+    nlul-cci-rtm2-w01-workerlt04:
+      ilo_address: 10.250.161.23
+      type: workerlt
+    nlul-cci-rtm2-w01-workerlt05:
+      ilo_address: 10.250.161.24
+      type: workerlt
+    nlul-cci-rtm2-w01-workerlt06:
+      ilo_address: 10.250.161.25
+      type: workerlt
+    nlul-cci-rtm2-w01-workerlt07:
+      ilo_address: 10.250.161.26
+      type: workerlt
+    nlul-cci-rtm2-w01-workerlt08:
+      ilo_address: 10.250.161.27
+      type: workerlt
+    nlul-cci-rtm2-w01-workerlt09:
+      ilo_address: 10.250.161.28
+      type: workerlt
+  w01-asd2:
+    nlup-cci-asd2-w01-provisioning01:
+      ilo_address: 10.242.109.132
+      type: provisioning
+    nlup-cci-asd2-w01-master01:
+      ilo_address: 10.242.109.139
+      type: master
+    nlup-cci-asd2-w01-master02:
+      ilo_address: 10.242.109.140
+      type: master
+    nlup-cci-asd2-w01-master03:
+      ilo_address: 10.242.109.141
+      type: master
+    nlup-cci-asd2-w01-storage01:
+      ilo_address: 10.242.109.142
+      type: storage
+    nlup-cci-asd2-w01-storage02:
+      ilo_address: 10.242.109.143
+      type: storage
+    nlup-cci-asd2-w01-storage03:
+      ilo_address: 10.242.109.144
+      type: storage
+    nlup-cci-asd2-w01-infra01:
+      ilo_address: 10.242.109.145
+      type: infra
+    nlup-cci-asd2-w01-infra02:
+      ilo_address: 10.242.109.146
+      type: infra
+    nlup-cci-asd2-w01-infra03:
+      ilo_address: 10.242.109.147
+      type: infra
+    nlup-cci-asd2-w01-workerlt01:
+      ilo_address: 10.242.109.148
+      type: workerlt
+    nlup-cci-asd2-w01-workerlt02:
+      ilo_address: 10.242.109.149
+      type: workerlt
+    nlup-cci-asd2-w01-workerlt03:
+      ilo_address: 10.242.109.150
+      type: workerlt
+    nlup-cci-asd2-w01-workerlt04:
+      ilo_address: 10.242.109.151
+      type: workerlt
+    nlup-cci-asd2-w01-workerlt05:
+      ilo_address: 10.242.109.152
+      type: workerlt
+    nlup-cci-asd2-w01-workerlt06:
+      ilo_address: 10.242.109.162
+      type: workerlt
+    nlup-cci-asd2-w01-workerlt07:
+      ilo_address: 10.242.109.163
+      type: workerlt
+  w01-rtm1:
+    nlup-cci-rtm1-w01-provisioning01:
+      ilo_address: 10.242.108.132
+      type: provisioning
+    nlup-cci-rtm1-w01-master01:
+      ilo_address: 10.242.108.139
+      type: master
+    nlup-cci-rtm1-w01-master02:
+      ilo_address: 10.242.108.140
+      type: master
+    nlup-cci-rtm1-w01-master03:
+      ilo_address: 10.242.108.141
+      type: master
+    nlup-cci-rtm1-w01-storage01:
+      ilo_address: 10.242.108.142
+      type: storage
+    nlup-cci-rtm1-w01-storage02:
+      ilo_address: 10.242.108.143
+      type: storage
+    nlup-cci-rtm1-w01-storage03:
+      ilo_address: 10.242.108.144
+      type: storage
+    nlup-cci-rtm1-w01-infra01:
+      ilo_address: 10.242.108.145
+      type: infra
+    nlup-cci-rtm1-w01-infra02:
+      ilo_address: 10.242.108.146
+      type: infra
+    nlup-cci-rtm1-w01-infra03:
+      ilo_address: 10.242.108.147
+      type: infra
+    nlup-cci-rtm1-w01-workerlt01:
+      ilo_address: 10.242.108.148
+      type: workerlt
+    nlup-cci-rtm1-w01-workerlt02:
+      ilo_address: 10.242.108.149
+      type: workerlt
+    nlup-cci-rtm1-w01-workerlt03:
+      ilo_address: 10.242.108.150
+      type: workerlt
+    nlup-cci-rtm1-w01-workerlt04:
+      ilo_address: 10.242.108.151
+      type: workerlt
+    nlup-cci-rtm1-w01-workerlt05:
+      ilo_address: 10.242.108.152
+      type: workerlt
+    nlup-cci-rtm1-w01-workerlt06:
+      ilo_address: 10.242.108.162
+      type: workerlt
+    nlup-cci-rtm1-w01-workerlt07:
+      ilo_address: 10.242.108.163
+      type: workerlt
+  w01-zl:
+    nlup-cci-zl-w01-provisioning01:
+      ilo_address: 10.242.109.68
+      type: provisioning
+    nlup-cci-zl-w01-master01:
+      ilo_address: 10.242.109.75
+      type: master
+    nlup-cci-zl-w01-master02:
+      ilo_address: 10.242.109.76
+      type: master
+    nlup-cci-zl-w01-master03:
+      ilo_address: 10.242.109.77
+      type: master
+    nlup-cci-zl-w01-storage01:
+      ilo_address: 10.242.109.78
+      type: storage
+    nlup-cci-zl-w01-storage02:
+      ilo_address: 10.242.109.79
+      type: storage
+    nlup-cci-zl-w01-storage03:
+      ilo_address: 10.242.109.80
+      type: storage
+    nlup-cci-zl-w01-infra01:
+      ilo_address: 10.242.109.81
+      type: infra
+    nlup-cci-zl-w01-infra02:
+      ilo_address: 10.242.109.82
+      type: infra
+    nlup-cci-zl-w01-infra03:
+      ilo_address: 10.242.109.83
+      type: infra
+    nlup-cci-zl-w01-workerlt01:
+      ilo_address: 10.242.109.84
+      type: workerlt
+    nlup-cci-zl-w01-workerlt02:
+      ilo_address: 10.242.109.85
+      type: workerlt
+    nlup-cci-zl-w01-workerlt03:
+      ilo_address: 10.242.109.86
+      type: workerlt
+    nlup-cci-zl-w01-workerlt04:
+      ilo_address: 10.242.109.87
+      type: workerlt
+    nlup-cci-zl-w01-workerlt05:
+      ilo_address: 10.242.109.88
+      type: workerlt
+    nlup-cci-zl-w01-workerlt06:
+      ilo_address: 10.242.109.89
+      type: workerlt
+    nlup-cci-zl-w01-workerlt07:
+      ilo_address: 10.242.109.90
+      type: workerlt
+    nlup-cci-zl-w01-workerlt08:
+      ilo_address: 10.242.109.91
+      type: workerlt
+    nlup-cci-zl-w01-workerlt09:
+      ilo_address: 10.242.109.92
+      type: workerlt
+    nlup-cci-zl-w01-workerlt10:
+      ilo_address: 10.242.109.93
+      type: workerlt
+    nlup-cci-zl-w01-workerlt11:
+      ilo_address: 10.242.109.94
+      type: workerlt
+  h01-rtm1:
+    nlup-cci-rtm1-h01-master01:
+      ilo_address: 10.242.108.153
+      type: master
+    nlup-cci-rtm1-h01-master02:
+      ilo_address: 10.242.108.154
+      type: master
+    nlup-cci-rtm1-h01-master03:
+      ilo_address: 10.242.108.155
+      type: master
+    nlup-cci-rtm1-h01-storage01:
+      ilo_address: 10.242.108.156
+      type: storage
+    nlup-cci-rtm1-h01-storage02:
+      ilo_address: 10.242.108.157
+      type: storage
+    nlup-cci-rtm1-h01-storage03:
+      ilo_address: 10.242.108.158
+      type: storage
+    nlup-cci-rtm1-h01-workerlt01:
+      ilo_address: 10.242.108.159
+      type: workerlt
+    nlup-cci-rtm1-h01-workerlt02:
+      ilo_address: 10.242.108.160
+      type: workerlt
+    nlup-cci-rtm1-h01-workerlt03:
+      ilo_address: 10.242.108.161
+      type: workerlt
+  h01-asd2:
+    nlup-cci-asd2-h01-master01:
+      ilo_address: 10.242.109.153
+      type: master
+    nlup-cci-asd2-h01-master02:
+      ilo_address: 10.242.109.154
+      type: master
+    nlup-cci-asd2-h01-master03:
+      ilo_address: 10.242.109.155
+      type: master
+    nlup-cci-asd2-h01-storage01:
+      ilo_address: 10.242.109.156
+      type: storage
+    nlup-cci-asd2-h01-storage02:
+      ilo_address: 10.242.109.157
+      type: storage
+    nlup-cci-asd2-h01-storage03:
+      ilo_address: 10.242.109.158
+      type: storage
+    nlup-cci-asd2-h01-workerlt01:
+      ilo_address: 10.242.109.159
+      type: workerlt
+    nlup-cci-asd2-h01-workerlt02:
+      ilo_address: 10.242.109.160
+      type: workerlt
+    nlup-cci-asd2-h01-workerlt03:
+      ilo_address: 10.242.109.161
+      type: workerlt

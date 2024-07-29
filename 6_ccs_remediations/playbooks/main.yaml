@@ -1,0 +1,11 @@
+---
+- hosts: "{{ hosts | default('all') }}"
+  user: "{{ user }}"
+  become: true
+  become_user: root
+  gather_facts: false
+  ignore_errors: false
+  roles:
+    - ccs_fixes
+  vars:
+    the_path: "/var/log"

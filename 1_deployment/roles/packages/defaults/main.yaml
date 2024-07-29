@@ -1,0 +1,7 @@
+adhoc_packages:
+  - "nmap-ncat"
+  - "unzip"
+  - "wget"
+  - "vim"
+  - "tcpdump"
+  #- "katello-agent"

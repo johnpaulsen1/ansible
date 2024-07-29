@@ -1,0 +1,21 @@
+---
+- name: kill tetration if running
+  shell: "pkill -9 -f {{ item }}"
+  register: killed_tetration
+  with_items:
+    - "{{ tetration_procs }}"
+  ignore_errors: true
+  when: tetration_running == true
+
+- name: download & install tetration
+  yum:
+    name: "{{ tetration_install_rpm }}"
+    state: present
+    validate_certs: false
+  register: download_install_tetration
+  when: (rpm_installed is failed or is_latest == false) and ansible_architecture == "x86_64"
+
+- name: set fact tetration_installed to true if download and install was successful
+  set_fact:
+    tetration_installed: true
+  when: download_install_tetration is success

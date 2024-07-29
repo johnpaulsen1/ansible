@@ -1,0 +1,20 @@
+---
+- name: "Create OneView config dictionary"
+  set_fact:
+    oneview_config: "{{ oneview_config | default({}) | combine( { 'ip': ip, 'credentials': credentials, 'api_version': api_version, 'variant': variant } ) }}"
+
+- name: "OneView config to json file"
+  copy:
+    content: "{{ oneview_config | to_nice_json }}"
+    dest: "{{ playbook_dir }}/config/files/oneview_config.json"
+    mode: "0600"
+
+- name: "Ensure that the OneView Config File exists"
+  stat:
+    path: "{{ playbook_dir }}/config/files/oneview_config.json"
+  register: oneview_config_file_stat
+
+- name: "Set the OneView Config File param"
+  set_fact:
+    oneview_config_file: "{{ playbook_dir }}/config/files/oneview_config.json"
+  when: oneview_config_file_stat.stat.exists

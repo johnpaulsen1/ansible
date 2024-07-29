@@ -1,0 +1,60 @@
+---
+- name: "Set ilo_server_names_list param - default"
+  set_fact:
+    ilo_server_names_list: "{{ cci_hpe_servers[cci_cluster].keys() }}"
+  when: hardware_status_task_server_names is not defined
+
+- name: "Set ilo_server_names_list param - from status task"
+  set_fact:
+    ilo_server_names_list: "{{ hardware_status_task_server_names }}"
+  when: hardware_status_task_server_names is defined
+
+- name: "Set ilo credentials dictionary"
+  include_tasks: set_ilo_credentials_dict.yaml
+  vars:
+    ilo_creds_server_names: "{{ ilo_server_names_list }}"
+
+- name: "Get value of the iLO Key -> 'IPMI' for cluster - {{ cci_cluster }}"
+  hpe_ilo_api:
+    ilo_ip: "{{ cci_hpe_servers[cci_cluster][item].ilo_address }}"
+    ilo_uri: /redfish/v1/managers/1/NetworkProtocol/
+    http_request_type: GET
+    ilo_username: "{{ ilo_creds_dict[item].user }}"
+    ilo_password: "{{ ilo_creds_dict[item].password }}"
+    search_key: IPMI
+  register: get_ilo_ipmi_result
+  loop: "{{ ilo_server_names_list }}"
+  when:
+    - ilo_creds_dict is defined
+    - ilo_server_names_list is defined
+
+- name: "Print the results of the get iLO IPMI task"
+  debug:
+    msg: "{{ item.messages }}"
+  loop: "{{ get_ilo_ipmi_result.results }}"
+  when:
+    - get_ilo_ipmi_result is success
+    - get_ilo_ipmi_result.results is defined
+
+- name: "Set list of servers param that need their iLO IPMI over LAN attribute updated as per '{{ required_ipmi_attr }}'"
+  set_fact:
+    set_ilo_ipmi_servers_list: "{{ set_ilo_ipmi_servers_list | default([]) + [item.item | string] }}"
+  loop: "{{ get_ilo_ipmi_result.results }}"
+  when:
+    - get_ilo_ipmi_result is success
+    - item.messages | join is not search(required_ipmi_attr)
+
+- name: "Server/s that need their iLO IPMI over LAN attribute updated / set"
+  debug:
+    msg: "Server - {{ item }}"
+  loop: "{{ set_ilo_ipmi_servers_list }}"
+  when:
+    - set_ilo_ipmi_servers_list is defined
+
+- name: "Set iLO IPMI over LAN attribute if needed"
+  include_tasks: enable_ilo_ipmi_over_lan.yaml
+  vars:
+    set_ilo_server_names_list_get_ilo_ipmi_task: "{{ set_ilo_ipmi_servers_list }}"
+  when:
+    - set_ilo_ipmi_servers_list is defined
+    - enable_ilo_ipmi

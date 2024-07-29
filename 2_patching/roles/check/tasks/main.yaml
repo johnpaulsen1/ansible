@@ -1,0 +1,10 @@
+---
+- name: check connectability to server/s
+  wait_for_connection:
+    timeout: 30 # will timeout after 30 seconds
+  register: ssh_check
+
+- name: successful connection
+  debug:
+    msg: "able to successfully connect to {{ inventory_hostname }}"
+  when: ssh_check is success

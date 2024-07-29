@@ -1,0 +1,43 @@
+- name: set month name based on date
+  shell: "date --date={{ ansible_date_time.date }} +%b"
+  register: month_name
+  changed_when: false
+
+- name: set day variable
+  shell: "echo {{ ansible_date_time.day }} | sed 's/^0/ /g'"
+  register: date_day
+  changed_when: false
+
+- name: set date variable to search in /var/log/messages
+  set_fact:
+    check_date: "{{ month_name.stdout }} {{ date_day.stdout }}"
+  when: month_name is success
+
+- name: check that /var/log/messages have latest date timestamp
+  shell: "tail -n5 /var/log/messages | grep '{{ check_date }}'"
+  register: os_logs_populated
+  when: month_name is success
+  ignore_errors: true
+  changed_when: false
+
+- name: "set os logs populated with latest date fact"
+  set_fact:
+    os_logs_populated_fact: true
+  when: os_logs_populated is success
+
+- name: "set os logs is NOT populated with latest date fact"
+  set_fact:
+    os_logs_populated_fact: false
+  when: os_logs_populated is failed
+
+- name: "OS logs /var/log/messages being populated with latest date timestamp"
+  debug:
+    msg: "OS logs /var/log/messages being populated with latest date timestamp"
+  when: os_logs_populated_fact == true
+  ignore_errors: true
+
+- name: "OS logs /var/log/messages is NOT being populated with latest date timestamp"
+  debug:
+    msg: "OS logs /var/log/messages is NOT being populated with latest date timestamp"
+  when: os_logs_populated_fact == false
+  ignore_errors: true

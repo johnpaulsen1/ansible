@@ -1,0 +1,28 @@
+---
+- name: test if splunkd is running
+  shell: ps aux | grep splunkd | grep -v grep
+  register: splunkd_running
+  failed_when: splunkd_running.rc == 1
+  ignore_errors: true
+  changed_when: false
+
+- name: test if splunkd directory is there
+  shell: ls /opt/splunk
+  register: splunkd_dir
+  failed_when: splunkd_dir.rc == 1
+  ignore_errors: true
+  changed_when: false
+
+- name: "set fact - splunk heavy forwarder is NOT installed"
+  set_fact:
+    splunk_installed: false
+  when: splunkd_running is failed or splunkd_dir is failed
+
+- name: "set fact - splunk heavy forwarder IS installed"
+  set_fact:
+    splunk_installed: true
+  when: splunkd_running is success and splunkd_dir is success
+
+- name: install splunk heavy forwarder
+  include: install.yaml
+  when: ansible_architecture == 'x86_64' and splunk_installed == false

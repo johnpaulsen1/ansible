@@ -1,0 +1,41 @@
+---
+# 6.1.12 Is it ensured that no ungrouped files or directories exist on the system?
+- name: Find GID orphaned files and directories in /home, /var/spool/mail, /var/db/sudo/lectured and /var/db/sudo.
+  shell: |
+    # Find GID orphaned files and directories.
+    find /home /var/spool/mail /var/db/sudo /var/db/sudo/lectured -maxdepth 1 -nogroup | while read line
+    do
+            # Grab the GID.
+            DELGID=$(ls -ld $line | awk -F" " '{print $4}')
+            # Check if the GID is below 500000 AD account UIDs are bigger that this.
+            if [ "$DELGID" -lt 500000 >> /dev/null 2>&1 ]
+            then
+                    # Find the file or directory name the GID owns.
+                    DIRNAME=$(find /home /var/spool/mail /var/db/sudo /var/db/sudo/lectured -maxdepth 1 -gid $DELGID)
+                    # Return the file or directory name.
+                    echo "$DIRNAME"
+            fi
+           # Sort to remove duplicates.
+    done | sort -u
+  args:
+    executable: /bin/bash
+  register: gid_orphaned_dirs
+  changed_when: false
+
+- name: Create a list of GID orphaned files and directories.
+  set_fact: gid_items="{{ gid_orphaned_dirs.stdout  | regex_findall('^[^ \n]*$', multiline=True) }}"
+
+# Comment out if unsure what will be deleted.
+- name: Delete GID orphaned files and directories.
+  file:
+    path: "{{ item }}"
+    state: absent
+    force: yes
+  with_items: "{{ gid_items }}"
+  ignore_errors: yes
+
+# Enable to test if it'll delete the correct files. 
+# - name: Show GID orphaned files and directories.
+#   shell: /bin/ls -d {{ item }}
+#   with_items: "{{ gid_items }}"
+#   ignore_errors: yes

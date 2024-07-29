@@ -1,0 +1,49 @@
+- name: gather facts
+  setup:
+    gather_subset:
+      - 'min'
+
+- set_fact:
+    vlan: lan
+    cacheable: yes
+  when: 
+    - ansible_default_ipv4['address'] is search( item )
+  with_items:
+    - '^192.168.12(1|2).'
+    - '^172.28.7.5(0|1).'
+    - '^10.5.(7|21|27|32|33).'
+    - '10.5.7.2'
+    - '^10.'
+
+- set_fact:
+    vlan: pci
+    cacheable: yes
+  when: 
+    - ansible_default_ipv4['address'] is search( item )
+  with_items:
+    - '^172.16.21.'
+    - '^172.22.1.'
+
+- set_fact:
+    vlan: dmz
+    cacheable: yes
+  when: 
+    - ansible_default_ipv4['address'] is search( item )
+  with_items:
+    - '^10.5.30.(0|9|11)'
+    - '^192.168.168.162'
+    - '^172.(16|22).(1|21).'
+    - '^10.33.46.'
+    - '^172.'
+
+- debug:
+    msg: "Server in LAN"
+  when: vlan == "lan"
+
+- debug:
+    msg: "Server in DMZ"
+  when: vlan == "dmz"
+
+- debug:
+    msg: "Server in PCI"
+  when: vlan == "pci"

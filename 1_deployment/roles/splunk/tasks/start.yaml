@@ -1,0 +1,44 @@
+---
+# rhel / centos 7/8
+- name: "enable boot start - 7"
+  shell: /opt/splunkforwarder/bin/splunk enable boot-start --accept-license --answer-yes --no-prompt -systemd-managed 1 -user splunk
+  ignore_errors: yes
+  when: (splunk_installed == true) and (ansible_distribution == 'RedHat' or ansible_distribution == 'CentOS') and (ansible_distribution_major_version != '6')
+
+- name: reload daemon
+  shell: systemctl daemon-reload
+  when: (splunk_installed == true) and (ansible_distribution == 'RedHat' or ansible_distribution == 'CentOS') and (ansible_distribution_major_version != '6')
+
+- name: "start splunk service - 7"
+  systemd:
+    state: started
+    name: SplunkForwarder
+  register: start_splunk_7
+  when: (splunk_installed == true) and (ansible_distribution == 'RedHat' or ansible_distribution == 'CentOS') and (ansible_distribution_major_version != '6')
+
+# rhel / centos 6
+- name: "enable boot start - 6"
+  shell: /opt/splunkforwarder/bin/splunk enable boot-start --accept-license --answer-yes --no-prompt -user splunk
+  register: enable_boot_6
+  when: (splunk_installed == true) and (ansible_distribution == 'RedHat' or ansible_distribution == 'CentOS') and (ansible_distribution_major_version == '6')
+  ignore_errors: true
+
+- name: change dir ownership
+  file:
+    path: /opt/splunkforwarder
+    owner: splunk
+    group: splunk
+    mode: '0775'
+    recurse: yes
+  when: splunk_installed == true
+
+- name: "enable splunk service to auto start on reboot"
+  service:
+    name: splunk
+    enabled: yes
+  ignore_errors: yes
+  when: (splunk_installed == true) and (ansible_distribution == 'RedHat' or ansible_distribution == 'CentOS') and (ansible_distribution_major_version == '6')
+
+- name: "start splunk service - 6"
+  shell: "/opt/splunkforwarder/bin/splunk start"
+  when: (splunk_installed == true) and (ansible_distribution == 'RedHat' or ansible_distribution == 'CentOS') and (ansible_distribution_major_version == '6')
