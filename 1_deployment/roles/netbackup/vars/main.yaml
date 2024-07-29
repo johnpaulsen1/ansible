@@ -1,4 +1,4 @@
-download_url: https://htf-cobbler.fnb.co.za/cobbler/pub/software/netbackup
+download_url: https://proxy_server_here/cobbler/pub/software/netbackup
 install_version: 8.1.2
 install_base: /opt/netbackup
 install_dir: "{{ install_base }}/openv"

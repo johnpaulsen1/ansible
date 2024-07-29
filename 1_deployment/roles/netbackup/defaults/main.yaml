@@ -24,51 +24,32 @@ netbackup_exclude_list:
   - /proc
   - /sys
 
-lan_authorization_token: JWFGAPMCFFZNBTPY
-lan_ca_certificate_fingerprint: 43:84:AF:09:4E:19:70:BC:B5:F2:C2:5A:CB:C6:6E:35:CB:50:7D:0C
-lan_vip: rbgmstvip
+lan_authorization_token: xxx
+lan_ca_certificate_fingerprint: fi:ng:er:pr:in:t1
+lan_vip: lan_vip_here
 
-dmz_authorization_token: YXMZUDZDSJSEYKUF
-dmz_ca_certificate_fingerprint: 67:38:A9:33:97:5E:33:A9:29:7B:54:08:CA:63:6B:36:FC:D1:9D:FA
-dmz_vip: netbackup1
+dmz_authorization_token: yyy
+dmz_ca_certificate_fingerprint: fi:ng:er:pr:in:t2
+dmz_vip: dmz_vip_here
 
-pci_authorization_token: FOGEQRZLTDXQRHQX
-pci_ca_certificate_fingerprint: SKIP
-pci_vip: cts-r1pcinbuapp.frgps.co.za
+pci_authorization_token: zzz
+pci_ca_certificate_fingerprint: fi:ng:er:pr:in:t3
+pci_vip: pci_vip_here
 
 client_name: "{{ ansible_fqdn }}"
 db_script_path: /home/oracle/scripts
 
 lan_servers:
-  - rbgmstvip
-  - rbgmstvip.fnb.co.za
-  - cts-r1lanmst01
-  - cts-r1lanmst01.fnb.co.za
-  - cts-r4lanmst01
-  - cts-r4lanmst01.fnb.co.za
+  - lan_server1
+  - lan_server2
+  - lan_server3
 
 dmz_servers:
-  - netbackup1
-  - netbackup1.fnb.co.za
-  - cts-r1dmzmst01
-  - cts-r1dmzmst01.fnb.co.za
-  - cts-r4dmzmst01
-  - cts-r4dmzmst01.fnb.co.za
+  - dmz_server1
+  - dmz_server2
+  - dmz_server3
 
 pci_servers:
-  - cts-r1pcinbmstv
-  - cts-r1pcinbmstv.icp.co.za
-  - cts-r1pcinbmstv.frgps.co.za
-  - cts-r1pcinbuapp.icp.co.za
-  - cts-r1pcinbuapp.frgps.co.za
-  - 172.20.119.241
-  - 172.20.119.242
-  - 172.20.119.243
-  - 172.20.119.161
-  - 172.20.119.41
-  - 172.20.119.42
-  - cts-r3pcinbmstv
-  - cts-r3pcinbmstv.icp.co.za
-  - cts-r3pcinbmstv.frgps.co.za
-  - cts-r3pcinbuapp.icp.co.za
-  - cts-r3pcinbuapp.frgps.co.za
+  - pci_server1
+  - pci_server2
+  - pci_server3

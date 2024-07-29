@@ -19,4 +19,3 @@
     state: absent
   when: tmc_daemon_found is success
   ignore_errors: true
-######################

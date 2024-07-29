@@ -1,6 +1,6 @@
 ---
 - hosts: "{{ hosts | default('all') }}"
-  user: f5013135
+  user: "{{ user }}"
   become: true
   become_user: root
   gather_facts: false

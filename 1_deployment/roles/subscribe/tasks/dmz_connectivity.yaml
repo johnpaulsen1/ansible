@@ -7,10 +7,10 @@
     delay: 1
     timeout: 10
   with_random_choice:
-    - "cts-rbcapsule01.fnb.co.za"
-    - "cts-rbcapsule02.fnb.co.za"
-    - "cts-rbcapsule03.fnb.co.za"
-    #- "cts-rbcapsule04.fnb.co.za"
+    - "capsule01"
+    - "capsule02"
+    - "capsule03"
+    - "capsule04"
   register: dmz_result
   ignore_errors: true
 
@@ -27,8 +27,3 @@
   set_fact:
     subscription_host: "{{ dmz_result.results[0]['invocation']['module_args']['host'] }}"
     cacheable: yes
-
-- name: prep
-  include: prep.yaml
-  when: dmz_result.results[0]['state'] == "started"
-  ignore_errors: true

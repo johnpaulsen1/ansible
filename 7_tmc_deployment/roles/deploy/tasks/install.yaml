@@ -63,4 +63,3 @@
     name: tmc_daemon.service
   when: tmc_daemon_found is failed or check_tmc_daemon_latest_version is failed
   ignore_errors: true
-######################

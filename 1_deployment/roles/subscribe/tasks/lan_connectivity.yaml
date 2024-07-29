@@ -7,8 +7,8 @@
     delay: 1
     timeout: 10
   with_random_choice:
-    - "cts-rbcapsule05.fnb.co.za"
-    - "cts-rbcapsule06.fnb.co.za"
+    - "capsule05"
+    - "capsule06"
   register: lan_result
   ignore_errors: true
 
@@ -25,7 +25,3 @@
   set_fact:
     subscription_host: "{{ lan_result.results[0]['invocation']['module_args']['host'] }}"
     cacheable: yes
-
-- name: prep
-  include: prep.yaml
-  when: lan_result.results[0]['state'] == "started"

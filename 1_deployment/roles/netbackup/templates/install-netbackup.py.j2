@@ -6,16 +6,6 @@
 
 import pexpect,os,sys
 
-##########################################
-# Written by Merritt Krakowitzer
-# mkrakowitzer@fnb.co.za
-# If it breaks you get to keep both pieces
-# Version 6 June 2012
-# Modified by Rudresh Korgaonkar
-# rudresh.korgaonkar@fnb.co.za
-# Version 14 June 2021
-##########################################
-
 def install_netbackup():
   os.chdir('{{ download_dir }}')
   child = pexpect.spawn('./install', timeout=300)

@@ -7,7 +7,7 @@
     remove: yes
   with_items:
      - omsagent
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: Remove OMS group.
   group:
@@ -15,12 +15,12 @@
     state: absent
   with_items:
     - omiusers
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: Check if server is fnb_ad_managed(Errors can be ignored here).
   command: /bin/grep DomainGroups /etc/sssd/sssd.conf 
   register: fnb_ad_managed
-  ignore_errors: yes
+  ignore_errors: true
 
 # GIT issue 1268 - Agent cleanup
 - name: Remove known old users.
@@ -29,16 +29,11 @@
     state: absent
     remove: yes
   with_items:
-     - f1420887
-     - f4850319
-     - f4675630
-     - f7542917
-     - f4629981
-     - f4997654
-     - f3333000
-     - f4683862
-     - f3576779
-  ignore_errors: yes
+     - user1
+     - user2
+     - user3
+     - user4
+  ignore_errors: true
   when: fnb_ad_managed is failed
 
 - name: Remove known old groups.
@@ -46,16 +41,11 @@
     name: "{{ item }}"
     state: absent
   with_items:
-    - f1420887
-    - f4850319
-    - f4675630
-    - f7542917
-    - f4629981
-    - f4997654
-    - f3333000
-    - f4683862
-    - f3576779
-  ignore_errors: yes
+     - user1
+     - user2
+     - user3
+     - user4
+  ignore_errors: true
   when: fnb_ad_managed is failed
 
 # Remove known orphaned files and directories.
@@ -70,21 +60,11 @@
     - /var/opt/microsoft
     - /var/opt/omi
     - /opt/microsoft/omsagent
-    - /var/spool/mail/f4629981
-    - /var/spool/mail/f4850319
-    - /var/spool/mail/f4675630
-    - /var/spool/mail/f7542917
-    - /var/spool/mail/f4997654
-    - /var/spool/mail/f3333000
-    - /var/spool/mail/f4683862
-    - /var/spool/mail/f1420887
-    - /var/spool/mail/f3576779
-    - /home/f4629981
-    - /home/f4850319
-    - /home/f4675630
-    - /home/f7542917
-    - /home/f4997654
-    - /home/f3333000
-    - /home/f4683862
-    - /home/f1420887
-    - /home/f3576779
+    - /var/spool/mail/user1
+    - /var/spool/mail/user2
+    - /var/spool/mail/user3
+    - /var/spool/mail/user4
+    - /home/user1
+    - /home/user2
+    - /home/user3
+    - /home/user4
