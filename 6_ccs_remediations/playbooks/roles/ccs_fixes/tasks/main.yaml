@@ -1,0 +1,7 @@
+---
+-  include: password_controls.yaml  
+-  include: remove_telnet.yaml
+-  include: ungrouped_files.yaml
+-  include: unowned_files.yaml
+-  include: remove_old_users.yaml
+-  include: log_permissions.yaml

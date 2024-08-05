@@ -1,0 +1,14 @@
+---
+- hosts: "{{ hosts | default('all') }}"
+  user: "{{ user }}"
+  become: true
+  become_user: root
+  ignore_errors: false
+
+  vars:
+    facter_file: /etc/facter/facts.d/default.yaml
+    
+  roles:
+    - { role: lan_or_dmz, tags: ['subscribe'] }
+    - { role: subscribe, tags: ['subscribe'] }
+    - { role: patch, tags: [ 'patch'] }

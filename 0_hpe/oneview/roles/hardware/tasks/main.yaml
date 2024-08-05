@@ -1,0 +1,28 @@
+---
+- name: "List HPE OneView server hardware"
+  include_tasks: list.yaml
+  when: list_servers
+
+- name: "Add HPE OneView server hardware"
+  include_tasks: add.yaml
+  when: add_servers
+
+- name: "Power HPE OneView All server hardware in cluster - {{ cci_cluster }} to - {{ power_state }}"
+  include_tasks: power.yaml
+  when:
+    - power_all
+    - cci_cluster is defined
+    - power_state is defined
+    - power_state != "None"
+
+- name: "Check the status of HPE OneView server hardware in cluster - {{ cci_cluster }}"
+  include_tasks: status.yaml
+  when: status_check
+
+- name: "Get iLO hostname/s for server/s in cluster - {{ cci_cluster }}"
+  include_tasks: get_ilo_hostname.yaml
+  when: get_ilo_hostname
+
+- name: "Get iLO IPMI config for server/s in cluster - {{ cci_cluster }}"
+  include_tasks: get_ilo_ipmi.yaml
+  when: get_ilo_ipmi

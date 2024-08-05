@@ -1,0 +1,20 @@
+- name: stop service
+  service:
+    name: besclient
+    state: stopped
+
+- name: removing agent
+  yum:
+    name: BESAgent
+    state: absent
+
+- name: remove BESClient dir
+  file:
+    path: /etc/opt/BESClient/
+    state: absent
+
+- name: remove BESClient dir (DMZ)
+  file:
+    path: /var/opt/BESClient
+    state: absent
+ 

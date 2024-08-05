@@ -1,0 +1,406 @@
+- name: check that splunk installed version file exists
+  stat:
+    path: "{{ splunk_installed_version_file_path }}"
+  register: splunk_installed_file
+  changed_when: false
+  ignore_errors: true
+
+- name: get major version fact
+  shell: "echo {{ splunk_latest_version }} | cut -d '-' -f2"
+  register: splunk_major_version
+  when: splunk_installed_file.stat.exists
+  changed_when: false
+  ignore_errors: true
+
+- name: get build version fact
+  shell: "echo {{ splunk_latest_version }} | cut -d '-' -f3"
+  register: splunk_build_version
+  when: splunk_installed_file.stat.exists
+  changed_when: false
+  ignore_errors: true
+
+- name: check that installed splunk major version is latest
+  shell: "grep VERSION={{ splunk_major_version.stdout }} {{ splunk_installed_version_file_path }}"
+  register: splunk_major_version_latest
+  when: splunk_installed_file.stat.exists
+  changed_when: false
+  ignore_errors: true
+
+- name: check that installed splunk build version is latest
+  shell: "grep BUILD={{ splunk_build_version.stdout }} {{ splunk_installed_version_file_path }}"
+  register: splunk_build_version_latest
+  when: splunk_installed_file.stat.exists
+  changed_when: false
+  ignore_errors: true
+
+- name: "set splunk installed fact"
+  set_fact:
+    splunk_installed_fact: true
+  when: splunk_installed_file.stat.exists
+
+- name: "set splunk latest installed fact"
+  set_fact:
+    splunk_latest_installed_fact: true
+  when: splunk_major_version_latest is success and splunk_build_version_latest is success
+
+- name: "check if splunk is running"
+  shell: "{{ splunk_base_dir }}/bin/splunk status"
+  register: splunk_running
+  ignore_errors: true
+  changed_when: false
+  when: splunk_installed_fact == true
+
+- name: "set splunk running fact"
+  set_fact:
+    splunk_running_fact: true
+  when: splunk_running is success
+
+- name: "check that splunk log exists"
+  stat:
+    path: "{{ splunk_base_dir }}/var/log/splunk/splunkd.log"
+  register: splunk_log_file
+  ignore_errors: true
+
+- name: check that splunk did its handshake
+  shell: "grep 'Handshake done' {{ splunk_base_dir }}/var/log/splunk/splunkd.log"
+  register: handshake
+  ignore_errors: true
+  changed_when: false
+  when: splunk_installed_fact == true and splunk_log_file.stat.exists
+
+- name: "set splunk handshake fact"
+  set_fact:
+    splunk_handshake_fact: true
+  when: handshake is success
+
+- name: "check that splunk instance file exists"
+  stat:
+    path: "{{ splunk_base_dir }}/etc/instance.cfg"
+  register: splunk_instance_file
+  ignore_errors: true
+
+- name: "set splunk instance file exists fact"
+  set_fact:
+    splunk_instance_file_fact: true
+  when: splunk_instance_file.stat.exists
+
+- name: check that {{ splunk_user }} has access to OS logs '/var/log'
+  acl:
+    path: "/var/log"
+  register: acl_info_varlog
+
+- name: "set splunk varlog acl access fact"
+  set_fact:
+    splunk_varlog_acl_access_fact: true
+  when: "splunk_user in acl_info_varlog.acl[1]"
+
+- name: "check that {{ splunk_user }} has access to OS logs '/var/log/messages'"
+  acl:
+    path: "/var/log/messages"
+  register: acl_info_varlog_messages
+
+- name: "set splunk varlog_messages acl access fact"
+  set_fact:
+    splunk_varlog_messages_acl_access_fact: true
+  when: "splunk_user in acl_info_varlog_messages.acl[1]"
+
+- name: "check that {{ splunk_user }} has access to OS logs '/var/log/secure'"
+  acl:
+    path: "/var/log/secure"
+  register: acl_info_varlog_secure
+
+- name: "set splunk varlog_secure acl access fact"
+  set_fact:
+    splunk_varlog_secure_acl_access_fact: true
+  when: "splunk_user in acl_info_varlog_secure.acl[1]"
+
+- name: set month name based on date
+  shell: "date --date={{ ansible_date_time.date }} +%b"
+  register: month_name
+  changed_when: false
+
+- name: set day variable
+  shell: "echo {{ ansible_date_time.day }} | sed 's/^0/ /g'"
+  register: date_day
+  changed_when: false
+
+- name: set date variable to search in /var/log/messages
+  set_fact:
+    check_date: "{{ month_name.stdout }} {{ date_day.stdout }}"
+  when: month_name is success
+
+- name: check that /var/log/messages have latest date timestamp
+  shell: "tail -n5 /var/log/messages | grep '{{ check_date }}'"
+  register: os_logs_populated
+  when: month_name is success
+  ignore_errors: true
+  changed_when: false
+
+- name: "set os logs populated with latest date fact"
+  set_fact:
+    os_logs_populated_fact: true
+  when: os_logs_populated is success
+
+- name: check that frg_all_deploymentclient exists under splunks etc/apps
+  stat:
+    path: "{{ splunk_base_dir }}/etc/apps/frg_all_deploymentclient"
+  register: frg_all_deploymentclient_dir_stat
+  ignore_errors: true
+  changed_when: false
+
+- name: "check if splunk systemd service file exists - 7"
+  stat:
+    path: "{{ splunk_systemd_service_file }}"
+  register: check_splunk_systemd_service_file
+  when: ansible_distribution_major_version >= '7'
+  ignore_errors: true
+  changed_when: false
+
+- name: "check if splunk user defined in systemd service file - 7"
+  shell: "grep User={{ splunk_user }} {{ splunk_systemd_service_file }}"
+  register: splunk_systemd_file
+  when: ansible_distribution_major_version >= '7' and check_splunk_systemd_service_file.stat.exists
+  ignore_errors: true
+  changed_when: false
+
+- name: "disable boot-start - 7"
+  shell: "{{ splunk_base_dir }}/bin/splunk disable boot-start"
+  register: disable_boot
+  when: ansible_distribution_major_version >= '7' and (splunk_systemd_file is failed or not check_splunk_systemd_service_file.stat.exists)
+  ignore_errors: true
+
+- name: "remove SplunkForwarder service symlink - 7"
+  file:
+    path: "/etc/systemd/system/multi-user.target.wants/SplunkForwarder.service"
+    state: absent
+  ignore_errors: true
+  when: ansible_distribution_major_version >= '7' and (splunk_systemd_file is failed or not check_splunk_systemd_service_file.stat.exists)
+
+- name: "remove SplunkForwarder service file - 7"
+  file:
+    path: "/etc/systemd/system/SplunkForwarder.service"
+    state: absent
+  ignore_errors: true
+  when: ansible_distribution_major_version >= '7' and (splunk_systemd_file is failed or not check_splunk_systemd_service_file.stat.exists)
+
+- name: "stop splunk - 7"
+  shell: "{{ splunk_base_dir }}/bin/splunk stop"
+  register: splunk_stop
+  when: ansible_distribution_major_version >= '7' and (splunk_systemd_file is failed or not check_splunk_systemd_service_file.stat.exists)
+
+- name: "enable splunk boot start - 7"
+  shell: "{{ splunk_base_dir }}/bin/splunk enable boot-start --accept-license --answer-yes --no-prompt -systemd-managed 1 -user {{ splunk_user }}"
+  register: splunk_enable_boot_start
+  when: ansible_distribution_major_version >= '7' and (splunk_systemd_file is failed or not check_splunk_systemd_service_file.stat.exists)
+
+- name: "set splunk restart post enable fact - 7"
+  set_fact:
+    restart_splunk_post_enable: true
+  when: ansible_distribution_major_version >= '7' and (splunk_systemd_file is failed or not check_splunk_systemd_service_file.stat.exists)
+
+- name: "check if splunk systemd service file exists - 7"
+  stat:
+    path: "{{ splunk_systemd_service_file }}"
+  register: check_splunk_systemd_service_file
+  when: ansible_distribution_major_version >= '7'
+  ignore_errors: true
+  changed_when: false
+
+- name: "check if splunk init.d service file exists - 6"
+  stat:
+    path: "{{ splunk_initd_service_file }}"
+  register: check_splunk_initd_service_file
+  when: ansible_distribution_major_version == '6'
+  ignore_errors: true
+  changed_when: false
+
+- name: "check if splunk base dir defined in initd service file - 6"
+  shell: "grep {{ splunk_base_dir }} {{ splunk_initd_service_file }}"
+  register: splunk_initd_file
+  when: ansible_distribution_major_version == '6' and check_splunk_initd_service_file.stat.exists
+  ignore_errors: true
+  changed_when: false
+
+- name: "disable boot-start - 6"
+  shell: "{{ splunk_base_dir }}/bin/splunk disable boot-start"
+  register: disable_boot
+  when: ansible_distribution_major_version == '6' and (splunk_initd_file is failed or not check_splunk_initd_service_file.stat.exists)
+  ignore_errors: true
+
+- name: "remove I&SS SplunkForwarder service file - 6"
+  file:
+    path: "/etc/init.d/splunk"
+    state: absent
+  ignore_errors: true
+  when: ansible_distribution_major_version == '6' and (splunk_initd_file is failed or not check_splunk_initd_service_file.stat.exists)
+
+- name: "stop splunk - 6"
+  shell: "{{ splunk_base_dir }}/bin/splunk stop"
+  register: splunk_stop
+  when: ansible_distribution_major_version == '6' and (splunk_initd_file is failed or not check_splunk_initd_service_file.stat.exists)
+
+- name: "enable splunk boot start - 6"
+  shell: "{{ splunk_base_dir }}/opt/splunkforwarder/bin/splunk enable boot-start --accept-license --answer-yes --no-prompt -user {{ splunk_user }}"
+  register: splunk_enable_boot_start
+  when: ansible_distribution_major_version == '6' and (splunk_initd_file is failed or not check_splunk_initd_service_file.stat.exists)
+
+- name: "set splunk restart post enable fact - 6"
+  set_fact:
+    restart_splunk_post_enable: true
+  when: ansible_distribution_major_version == '6' and (splunk_initd_file is failed or not check_splunk_initd_service_file.stat.exists)
+
+- name: "check if splunk init.d service file exists - 6"
+  stat:
+    path: "{{ splunk_initd_service_file }}"
+  register: check_splunk_initd_service_file
+  when: ansible_distribution_major_version == '6'
+  ignore_errors: true
+  changed_when: false
+
+- name: "set splunk systemd service file exists fact - 7"
+  set_fact:
+    check_splunk_systemd_service_file_fact: true
+  when: ansible_distribution_major_version == '7' and check_splunk_systemd_service_file.stat.exists
+
+- name: "set splunk init.d service file exists fact - 6"
+  set_fact:
+    check_splunk_initd_service_file_fact: true
+  when: ansible_distribution_major_version == '6' and check_splunk_initd_service_file.stat.exists
+
+- name: "set frg_all_deploymentclient exists fact"
+  set_fact:
+    frg_all_deploymentclient_dir_exists_fact: true
+  when: frg_all_deploymentclient_dir_stat.stat.exists
+
+- name: "splunk is running"
+  debug:
+    msg: "splunk is running on {{inventory_hostname}} , {{splunk_running.stdout}}"
+  when: splunk_installed_fact == true and splunk_running is success
+  ignore_errors: true
+
+- name: "splunk handshake successful"
+  debug:
+    msg: "splunk handshake successful on {{inventory_hostname}} , {{handshake.stdout}}"
+  when: splunk_installed_fact == true and handshake is success
+  ignore_errors: true
+
+- name: "splunk instance.cfg file exists"
+  debug:
+    msg: "{{ splunk_base_dir }}/etc/instance.cfg exists"
+  when: splunk_instance_file_fact == true
+  ignore_errors: true
+
+- name: "splunk systemd service file exists - 7"
+  debug:
+    msg: "{{ splunk_systemd_service_file }} exists"
+  when: ansible_distribution_major_version >= '7' and check_splunk_systemd_service_file_fact == true
+  ignore_errors: true
+
+- name: "splunk systemd service file exists - 6"
+  debug:
+    msg: "{{ splunk_initd_service_file }} exists"
+  when: ansible_distribution_major_version == '6' and check_splunk_initd_service_file_fact == true
+  ignore_errors: true
+
+- name: "{{ splunk_user }} has access to OS logs /var/log"
+  debug:
+    msg: "splunk's access on /var/log = {{ acl_info_varlog.acl[1] }}"
+  when: splunk_varlog_acl_access_fact == true
+  ignore_errors: true
+
+- name: "{{ splunk_user }} has access to OS logs /var/log/messages"
+  debug:
+    msg: "splunk's access on /var/log/messages = {{ acl_info_varlog_messages.acl[1] }}"
+  when: splunk_varlog_messages_acl_access_fact == true
+  ignore_errors: true
+
+- name: "{{ splunk_user }} has access to OS logs /var/log/secure"
+  debug:
+    msg: "splunk's access on /var/log/secure = {{ acl_info_varlog_secure.acl[1] }}"
+  when: splunk_varlog_secure_acl_access_fact == true
+  ignore_errors: true
+
+- name: "OS logs /var/log/messages being populated with latest date timestamp"
+  debug:
+    msg: "OS logs /var/log/messages being populated with latest date timestamp"
+  when: os_logs_populated_fact == true
+  ignore_errors: true
+
+- name: "{{ splunk_base_dir }}/etc/apps/frg_all_deploymentclient exists"
+  debug:
+    msg: "etc/apps directory '{{ splunk_base_dir }}/etc/apps/frg_all_deploymentclient' exists"
+  when: frg_all_deploymentclient_dir_exists_fact == true
+  ignore_errors: true
+
+- name: "splunk is NOT running"
+  debug:
+    msg: "splunk is NOT running on {{inventory_hostname}} , {{splunk_running.stdout}}"
+  when: splunk_installed_fact == true and splunk_running is failed
+  ignore_errors: true
+
+- name: "splunk handshake FAILED"
+  debug:
+    msg: "splunk handshake failed on {{inventory_hostname}} , please check the logs {{ splunk_base_dir }}/var/log/splunk/splunkd.log . also ensure that dir {{ splunk_base_dir }}/etc/apps/frg_all_deploymentclient/local has files in it."
+  when: splunk_installed_fact == true and handshake is failed
+  ignore_errors: true
+
+- name: "splunk instance.cfg file DOES NOT exists"
+  debug:
+    msg: "{{ splunk_base_dir }}/etc/instance.cfg DOES NOT exist"
+  when: splunk_instance_file_fact == false
+  ignore_errors: true
+
+- name: "splunk systemd service file DOES NOT exists - 7"
+  debug:
+    msg: "{{ splunk_systemd_service_file }} DOES NOT exist"
+  when: ansible_distribution_major_version >= '7' and check_splunk_systemd_service_file_fact == false
+  ignore_errors: true
+
+- name: "splunk systemd service file DOES NOT exists - 6"
+  debug:
+    msg: "{{ splunk_initd_service_file }} DOES NOT exist"
+  when: ansible_distribution_major_version == '6' and check_splunk_initd_service_file_fact == false
+  ignore_errors: true
+
+- name: "{{ splunk_user }} DOES NOT have access to OS logs /var/log"
+  debug:
+    msg: "splunk DOES NOT have access to OS logs /var/log"
+  when: splunk_varlog_acl_access_fact == false
+  ignore_errors: true
+
+- name: "{{ splunk_user }} DOES NOT have access to OS logs /var/log/messages"
+  debug:
+    msg: "splunk DOES NOT have access to OS logs /var/log/messages"
+  when: splunk_varlog_messages_acl_access_fact == false
+  ignore_errors: true
+
+- name: "{{ splunk_user }} DOES NOT have access to OS logs /var/log/secure"
+  debug:
+    msg: "splunk DOES NOT have access to OS logs /var/log/secure"
+  when: splunk_varlog_secure_acl_access_fact == false
+  ignore_errors: true
+
+- name: "OS logs /var/log/messages is NOT being populated with latest date timestamp"
+  debug:
+    msg: "OS logs /var/log/messages is NOT being populated with latest date timestamp"
+  when: os_logs_populated_fact == false
+  ignore_errors: true
+
+- name: "{{ splunk_base_dir }}/etc/apps/frg_all_deploymentclient DOES NOT exist"
+  debug:
+    msg: "etc/apps directory '{{ splunk_base_dir }}/etc/apps/frg_all_deploymentclient' DOES NOT exists "
+  when: frg_all_deploymentclient_dir_exists_fact == false
+  ignore_errors: true
+
+- name: "attempting to restart splunk"
+  shell: "{{ splunk_base_dir }}/bin/splunk restart"
+  register: splunk_restart
+  when: splunk_installed_fact == true and splunk_running is failed
+
+- name: "attempting to restart splunk post enabling"
+  shell: "{{ splunk_base_dir }}/bin/splunk restart"
+  register: splunk_restart_post_enable
+  when: restart_splunk_post_enable == true
+
+- name: print final results
+  include: result.yaml

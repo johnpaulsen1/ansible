@@ -1,0 +1,54 @@
+#### Check if port is open DMZ
+- block:
+   - name: check port for a DMZ host
+     wait_for:
+       host: x.x.x.x
+       port: 80
+       state: started
+       delay: 0
+       timeout: 3
+     when: vlan == "dmz"
+     ignore_errors: true
+     register: dmz_result
+
+   ### Set message
+   - debug:
+       msg: "DMZ connectivity working"
+     ignore_errors: true
+     when: dmz_result['state'] == "started"
+   
+   ### install on DMZ
+   - name: install dmz
+     include: dmz_install.yaml
+     ignore_errors: true
+     when: dmz_result['state'] == "started"
+  when: vlan == 'dmz'
+
+### Check port LAN
+- block:
+  - name: check port for a LAN host
+    wait_for:
+      host: x.x.x.x
+      port: yyyy
+      state: started
+      delay: 0
+      timeout: 3
+    when: vlan == "lan"
+    ignore_errors: true
+    register: lan_result
+  
+  - debug:
+      var: lan_result['state']
+  
+  ### Set message
+  - debug: 
+      msg: "LAN connectivity working"
+    ignore_errors: true
+    when: lan_result['state'] == "started"
+  
+  ### Install on LAN
+  - name: install on LAN
+    include: lan_install.yaml
+    ignore_errors: true
+    when: lan_result['state'] == "started"
+  when: vlan == 'lan'

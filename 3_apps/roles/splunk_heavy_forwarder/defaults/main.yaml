@@ -1,0 +1,2 @@
+splunk_url: http://proxy_server_here/cobbler/pub/software/splunk
+splunk_heavy_forwarder_install: 'splunk-8.0.1-6db836e2fb9e-Linux-x86_64.tgz'

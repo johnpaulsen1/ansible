@@ -1,0 +1,5 @@
+---
+
+- name: display IP and subnet for servers who got Connection refused
+  debug:
+    msg: "IP: {{ ansible_default_ipv4.address }} , subnet: {{ ansible_default_ipv4.netmask }}"

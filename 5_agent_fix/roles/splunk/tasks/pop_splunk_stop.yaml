@@ -1,0 +1,202 @@
+- name: "check if opt websphere splunk dir is present"
+  stat:
+    path: "/opt/WebSphere/splunkforwarder"
+  register: opt_websphere_splunk
+  ignore_errors: true
+  changed_when: false
+
+- name: set vars - opt websphere
+  set_fact:
+    bu_splunk_base_dir: "/opt/WebSphere/splunkforwarder"
+    splunk_user: "bbasadm"
+  when: opt_websphere_splunk.stat.exists
+
+- name: "check if websphere splunk dir is present"
+  stat:
+    path: "/WebSphere/splunkforwarder"
+  register: websphere_splunk
+  ignore_errors: true
+  changed_when: false
+
+- name: set vars - websphere
+  set_fact:
+    bu_splunk_base_dir: "/WebSphere/splunkforwarder"
+    splunk_user: "bbasadm"
+  when: websphere_splunk.stat.exists
+
+- name: "check if dmr splunk dir is present"
+  stat:
+    path: "/opt/WebSphereLogs/splunkforwarder"
+  register: dmr_splunk
+  ignore_errors: true
+  changed_when: false
+
+- name: set vars - dmr
+  set_fact:
+    bu_splunk_base_dir: "/opt/WebSphereLogs/splunkforwarder"
+    splunk_user: "bbasadm"
+  when: dmr_splunk.stat.exists
+
+- name: "check if wrp splunk dir is present"
+  stat:
+    path: "/opt/application/splunkforwarder/splunkforwarder"
+  register: wrp_splunk
+  ignore_errors: true
+  changed_when: false
+
+- name: set vars - wrp
+  set_fact:
+    bu_splunk_base_dir: "/opt/application/splunkforwarder/splunkforwarder"
+    splunk_user: "bbasadm"
+  when: wrp_splunk.stat.exists
+
+- name: "check if database splunk dir is present"
+  stat:
+    path: "/opt/db2/log1/db2insts/Splunk/splunkforwarder"
+  register: database_splunk
+  ignore_errors: true
+  changed_when: false
+
+- name: set vars - database
+  set_fact:
+    bu_splunk_base_dir: "/opt/db2/log1/db2insts/Splunk/splunkforwarder"
+    splunk_user: "db2insts"
+  when: database_splunk.stat.exists
+
+- name: "check if database log splunk dir is present"
+  stat:
+    path: "/db2/log1/db2instn/Splunk/splunkforwarder"
+  register: database_log_splunk
+  ignore_errors: true
+  changed_when: false
+
+- name: set vars - database log
+  set_fact:
+    bu_splunk_base_dir: "/db2/log1/db2instn/Splunk/splunkforwarder"
+    splunk_user: "db2instn"
+  when: database_log_splunk.stat.exists
+
+- name: "check if idm splunk dir is present"
+  stat:
+    path: "/opt/idmadmins/splunk/splunkforwarder"
+  register: idm_splunk
+  ignore_errors: true
+  changed_when: false
+
+- name: set vars - idm
+  set_fact:
+    bu_splunk_base_dir: "/opt/idmadmins/splunk/splunkforwarder"
+    splunk_user: "idmadmins"
+  when: idm_splunk.stat.exists
+
+- name: "check if tomcat splunk dir is present"
+  stat:
+    path: "/opt/tomcat1/splunk/splunkforwarder"
+  register: tomcat_splunk
+  ignore_errors: true
+  changed_when: false
+
+- name: set vars - tomcat
+  set_fact:
+    bu_splunk_base_dir: "/opt/tomcat1/splunk/splunkforwarder"
+    splunk_user: "tomcat1"
+  when: tomcat_splunk.stat.exists
+
+- name: "check if jboss splunk dir is present"
+  stat:
+    path: "/opt/JBoss/splunkforwarder"
+  register: jboss_splunk
+  ignore_errors: true
+  changed_when: false
+
+- name: set vars - jboss
+  set_fact:
+    bu_splunk_base_dir: "/opt/JBoss/splunkforwarder"
+    splunk_user: "jboss"
+  when: jboss_splunk.stat.exists
+
+- name: "check if signdoc splunk dir is present"
+  stat:
+    path: "/opt/signdoc/splunk/splunkforwarder"
+  register: signdoc_splunk
+  ignore_errors: true
+  changed_when: false
+
+- name: set vars - signdoc
+  set_fact:
+    bu_splunk_base_dir: "/opt/signdoc/splunk/splunkforwarder"
+    splunk_user: "signdoc"
+  when: signdoc_splunk.stat.exists
+
+- name: disable splunk
+  shell: "{{ bu_splunk_base_dir }}/bin/splunk disable boot-start"
+  register: disable_splunk
+
+- name: "check if I&SS splunk is install dir is present"
+  stat:
+    path: "{{ iss_splunk_base_dir }}"
+  register: iss_splunk_path
+  ignore_errors: true
+  changed_when: false
+
+- name: remove I&SS splunkforwarder directory
+  file:
+    path: "{{ iss_splunk_base_dir }}"
+    state: absent
+  when: iss_splunk_path.stat.exists
+  ignore_errors: true
+
+- name: stop splunk - nicely
+  shell: "{{ bu_splunk_base_dir }}/bin/splunk stop"
+  register: stop_splunk
+  ignore_errors: true
+
+- name: "stop and disable splunk service - 7"
+  systemd:
+    name: "SplunkForwarder"
+    state: "stopped"
+    enabled: "no"
+  register: stop_splunk_service
+  when: ansible_distribution_major_version >= '7'
+  ignore_errors: true
+
+- name: "stop and disable splunk service - 6"
+  service:
+    name: "splunk"
+    state: "stopped"
+    enabled: "no"
+  register: stop_splunk_service
+  when: ansible_distribution_major_version == '6'
+  ignore_errors: true
+
+- name: force kill splunk
+  shell: "ps aux | grep -i splunk | grep -v grep | xargs kill -9"
+  when: stop_splunk is failed and stop_splunk_service is failed
+  ignore_errors: true
+
+- name: remove I&SS SplunkForwarder service symlink - 7
+  file:
+    path: "/etc/systemd/system/multi-user.target.wants/SplunkForwarder.service"
+    state: absent
+  ignore_errors: true
+  when: ansible_distribution_major_version >= '7'
+
+- name: remove I&SS SplunkForwarder service file - 7
+  file:
+    path: "/etc/systemd/system/SplunkForwarder.service"
+    state: absent
+  ignore_errors: true
+  when: ansible_distribution_major_version >= '7'
+
+- name: remove I&SS SplunkForwarder service file - 6
+  file:
+    path: "/etc/init.d/splunk"
+    state: absent
+  ignore_errors: true
+  when: ansible_distribution_major_version == '6'
+
+- name: remove I&SS splunk install
+  yum:
+    name: "splunkforwarder"
+    state: absent
+  ignore_errors: true

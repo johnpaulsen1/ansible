@@ -1,0 +1,23 @@
+---
+- name: "'oneview_config_file' param check"
+  debug:
+    msg: "The 'oneview_config_file' param is not defined.\nIt is defined when running 'ov_config' role."
+  when: oneview_config_file is not defined
+
+- name: "Gather facts about all Server Hardwares"
+  hpe.oneview.oneview_server_hardware_facts:
+    config: "{{ oneview_config_file }}"
+  delegate_to: localhost
+  when: oneview_config_file is defined
+
+- name: "Show Hardware Facts"
+  debug:
+    msg:
+      - "server name - {{ item.serverName }}"
+      - "ilo ip address - {{ item.mpHostInfo.mpIpAddresses[0]['address'] }}"
+  loop: "{{ server_hardwares | flatten(levels=1) }}"
+  when: server_hardwares is defined
+
+- name: "cleanup OneView config"
+  include_role:
+    name: cleanup_ov_config

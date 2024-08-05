@@ -1,0 +1,20 @@
+- name: check policy file
+  stat:
+    path: /var/opt/managesoft/log/uploader.log
+  register: uploader_exist
+  no_log: true
+
+- name: "Check uploader logfile"
+  shell: grep "Program exited successfully" /var/opt/managesoft/log/uploader.log
+  register: uploader_file
+  when: uploader_exist.stat.exists
+  no_log: true
+
+- set_fact:
+    upload_success: true
+    cacheable: yes
+  when: uploader_file.rc == 0 and uploader_exist.stat.exists
+  no_log: true
+
+- name: print message
+  include: result.yaml

@@ -1,0 +1,12 @@
+- name: remove managesoft
+  yum:
+    name: managesoft
+    state: absent
+
+- name: remove managesoft dir
+  file:
+    path: /var/opt/managesoft
+    state: absent
+
+- name: install latest
+  include: dmz_check.yaml

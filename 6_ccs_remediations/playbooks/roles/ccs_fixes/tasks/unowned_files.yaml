@@ -1,0 +1,68 @@
+---
+# 6.1.11 Is it ensured that no unowned files or directories exist on the system?
+- name: Find UID orphaned files and directories in /home, /var/spool/mail, /var/db/sudo/lectured and /var/db/sudo.
+  shell: |
+    # Find UID orphaned files and directories.
+    find /home /var/spool/mail /var/db/sudo /var/db/sudo/lectured -maxdepth 1 -nouser | while read line
+    do
+      # Grab the UID.
+      DELUID=$(ls -ld $line | awk -F" " '{print $3}')
+      # Check if the UID is below 500000 AD account UIDs are bigger that this.
+      if [ "$DELUID" -lt 500000 >> /dev/null 2>&1 ]
+      then
+              # Find the file or directory name the UID owns.
+              DIRNAME=$(find /home /var/spool/mail /var/db/sudo /var/db/sudo/lectured -maxdepth 1 -uid $DELUID)
+              # Return the file or directory name.
+                              echo "$DIRNAME"
+      fi
+           # Sort to remove duplicates.
+    done | sort -u
+  args:
+    executable: /bin/bash
+  register: uid_orphaned_dirs
+  changed_when: false
+
+- name: Create a list of UID orphaned files and directories.
+  set_fact: uid_items="{{ uid_orphaned_dirs.stdout  | regex_findall('^[^ \n]*$', multiline=True) }}"
+
+# Comment out if unsure what will be deleted.
+#- name: Delete UID orphaned files and directories.
+#  file:
+#    path: "{{ item }}"
+#    state: absent
+#    force: yes
+#  with_items: "{{ uid_items }}"
+#  ignore_errors: true
+
+# Enable to test if it'll delete the correct files. 
+  - name: Show UID orphaned files and directories.
+    shell: /bin/ls -d {{ item }}
+    with_items: "{{ uid_items }}"
+    ignore_errors: true
+
+# Find and chown files that live inside existing users' home directories.
+# Note: id is run to determine if the user exists primarily in AD.
+#       If the command fails, the user is assumed to no longer exist in AD
+#       and their data is deleted.
+- name: chown files in existing users' home directories.
+  shell: |
+    find /home/f[0-9][0-9][0-9][0-9][0-9][0-9][0-9] -nouser | awk -F'/' '{print $3}' | sort -u | while read USERNAME
+    do
+        if id $USERNAME > /dev/null 2>&1
+        then
+            echo "chowning $USERNAME's files."
+            chown -R $USERNAME:$USERNAME /home/$USERNAME/
+        else
+            echo "User $USERNAME doesn't exist. Deleting their files."
+            rm -rf /home/$USERNAME
+            rm -rf /var/spool/mail/$USERNAME
+            rm -rf /var/db/sudo/$USERNAME
+            rm -rf /var/db/sudo/lectured/$USERNAME
+        fi
+    done
+  args:
+    executable: /bin/bash
+  changed_when: false
+  register: output
+  ignore_errors: true
+- debug: var=output.stdout_lines

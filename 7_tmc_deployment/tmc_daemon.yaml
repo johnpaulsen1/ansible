@@ -1,0 +1,13 @@
+---
+
+- hosts: "{{ hosts | default('all') }}"
+  user: "{{ user }}"
+  become: true
+  become_user: root
+  gather_facts: true
+  serial: 20
+
+  roles:
+    - { role: deploy, tags: ['deploy'] }
+    - { role: restart, tags: ['restart'] }
+    - { role: remove, tags: ['remove'] }

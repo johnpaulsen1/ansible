@@ -1,0 +1,87 @@
+- set_fact:
+    vlan: lan
+    cacheable: yes
+  when:
+    - ansible_default_ipv4['address'] is search( item )
+  with_items:
+    - '^x.x.(y|z).'
+
+- set_fact:
+    vlan: pci
+    cacheable: yes
+  when:
+    - ansible_default_ipv4['address'] is search( item )
+  with_items:
+    - '^x.x.x.'
+
+- set_fact:
+    vlan: dmz
+    cacheable: yes
+  when:
+    - ansible_default_ipv4['address'] is search( item )
+  with_items:
+    - '^x.x.x.(a|b|c)'
+
+- debug:
+    msg: "Server in LAN"
+  when: vlan == "lan"
+
+- debug:
+    msg: "Server in DMZ"
+  when: vlan == "dmz"
+
+- debug:
+    msg: "Server in PCI"
+  when: vlan == "pci"
+
+  #### Check if port is open DMZ
+- block:
+   - name: check port for a DMZ host
+     wait_for:
+       host: x.x.x.x
+       port: yyyy
+       state: started
+       delay: 0
+       timeout: 3
+     when: vlan == "dmz"
+     ignore_errors: true
+     register: dmz_result
+
+- debug:
+    var: dmz_result
+
+- debug:
+    msg: "DMZ connectivity working"
+  ignore_errors: true
+  when: dmz_result['state'] == "started"
+
+- set_fact:
+    dmz_ip_reachable: true
+  when: dmz_result['state'] == "started"
+
+### Check port LAN
+- block:
+  - name: check port for a LAN host
+    wait_for:
+      host: x.x.x.x
+      port: yyyy
+      state: started
+      delay: 0
+      timeout: 3
+    when: vlan == "lan"
+    ignore_errors: true
+    register: lan_result
+
+- debug:
+    var: lan_result
+
+### Set message
+- debug:
+    msg: "LAN connectivity working"
+  ignore_errors: true
+  when: lan_result['state'] == "started"
+
+- set_fact:
+    lan_ip_reachable: true
+    cacheable: true
+  when: lan_result['state'] == "started"

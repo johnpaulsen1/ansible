@@ -1,0 +1,96 @@
+---
+- name: "Set ilo_hostname_server_names_list param - default"
+  set_fact:
+    ilo_hostname_server_names_list: "{{ cci_hpe_servers[cci_cluster].keys() }}"
+  when:
+    - ilo_hostname_server_names_list_hw_task is not defined
+    - ilo_hostname_server_names_list_ilo_task is not defined
+
+- name: "Set ilo_hostname_server_names_list param - from get ilo hostname task"
+  set_fact:
+    ilo_hostname_server_names_list: "{{ ilo_hostname_server_names_list_ilo_task }}"
+  when:
+    - ilo_hostname_server_names_list_hw_task is not defined
+    - ilo_hostname_server_names_list_ilo_task is defined
+
+- name: "Set ilo_hostname_server_names_list param - from hardware task"
+  set_fact:
+    ilo_hostname_server_names_list: "{{ ilo_hostname_server_names_list_hw_task }}"
+  when:
+    - ilo_hostname_server_names_list_hw_task is defined
+    - ilo_hostname_server_names_list_ilo_task is not defined
+
+- name: "Set ilo credentials dictionary"
+  include_tasks: set_ilo_credentials_dict.yaml
+  vars:
+    ilo_creds_server_names: "{{ ilo_hostname_server_names_list }}"
+
+- name: "Attempting to set / update iLO hostname for the following server/s"
+  debug:
+    msg: "Server - {{ item }}"
+  loop: "{{ ilo_hostname_server_names_list }}"
+
+- name: "Set / Update the iLO HostName (Server Name in OneView) for cluster - {{ cci_cluster }}"
+  hpe_ilo_api:
+    ilo_ip: "{{ cci_hpe_servers[cci_cluster][item].ilo_address }}"
+    ilo_uri: /redfish/v1/systems/1
+    http_request_type: PATCH
+    http_request_body:
+      HostName: "{{ item }}"
+    ilo_username: "{{ ilo_creds_dict[item].user }}"
+    ilo_password: "{{ ilo_creds_dict[item].password }}"
+  register: set_ilo_hostname
+  loop: "{{ ilo_hostname_server_names_list }}"
+  when:
+    - ilo_hostname_server_names_list is defined
+    - ilo_creds_dict is defined
+
+- name: "RedFish Community modules task block"
+  block:
+    - name: "Create iLO session"
+      community.general.redfish_command:
+        category: Sessions
+        command: CreateSession
+        baseuri: "{{ cci_hpe_servers[cci_cluster][item].ilo_address }}"
+        username: "{{ ilo_creds_dict[item].user }}"
+        password: "{{ ilo_creds_dict[item].password }}"
+      register: ilo_session
+      loop: "{{ ilo_hostname_server_names_list }}"
+      when:
+        - ilo_creds_dict is defined
+        - ilo_hostname_server_names_list is defined
+
+    - name: "Set / Update the iLO HostName (Host Name in OneView) for cluster - {{ cci_cluster }}"
+      community.general.redfish_config:
+        category: Manager
+        command: SetManagerNic
+        nic_config:
+          HostName: "{{ item.item }}"
+        baseuri: "{{ cci_hpe_servers[cci_cluster][item.item].ilo_address }}"
+        auth_token: "{{ item.session.token }}"
+      loop: "{{ ilo_session.results }}"
+
+    - name: "Delete iLO session"
+      community.general.redfish_command:
+        category: Sessions
+        command: DeleteSession
+        baseuri: "{{ cci_hpe_servers[cci_cluster][item.item].ilo_address }}"
+        auth_token: "{{ item.session.token }}"
+        session_uri: "{{ item.session.uri }}"
+      loop: "{{ ilo_session.results }}"
+      when:
+        - ilo_session is success
+        - 'ilo_creds_dict[item.item].user != "admin"'
+
+  rescue:
+    - name: "Delete iLO session"
+      community.general.redfish_command:
+        category: Sessions
+        command: DeleteSession
+        baseuri: "{{ cci_hpe_servers[cci_cluster][item.item].ilo_address }}"
+        auth_token: "{{ item.session.token }}"
+        session_uri: "{{ item.session.uri }}"
+      loop: "{{ ilo_session.results }}"
+      when:
+        - ilo_session is success
+        - 'ilo_creds_dict[item.item].user != "admin"'

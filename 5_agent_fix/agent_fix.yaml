@@ -1,0 +1,19 @@
+---
+
+- hosts: "{{ hosts | default('all') }}"
+  user: "{{ user }}"
+  become: true
+  become_user: root
+  gather_facts: true
+  ignore_errors: true
+  serial: 20
+
+  tasks:
+  - name: gather some factibles
+    setup:
+      gather_subset:
+        - 'min'
+
+  roles:
+     - { role: splunk, tags: [ 'splunk'] }
+     - { role: tmc, tags: [ 'tmc'] }

@@ -1,0 +1,23 @@
+- name: gather some facts
+  setup:
+    gather_subset:
+      - '!all'
+      - 'min'
+
+- name: check flask port yyyy
+  wait_for:
+    host: x.x.x.x
+    port: yyyy
+    state: started
+    delay: 0
+    timeout: 3
+  ignore_errors: true
+  register: port_check
+
+- name: kill existing yum processes
+  shell: pkill -9 -f yum
+  ignore_errors: true
+
+- name: install tmc_daemon
+  include: install.yaml
+  when: port_check['failed'] == false and ansible_distribution_major_version >= '7'

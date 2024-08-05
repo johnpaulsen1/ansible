@@ -1,0 +1,15 @@
+---
+- name: attach subs
+  shell: subscription-manager attach
+  register: attach_result
+  when:
+    - ansible_distribution == "RedHat"
+
+- debug:
+    var: attach_result.stdout_lines[2]
+
+- name: enable repos
+  shell: subscription-manager repos
+
+- name: repolist
+  shell: yum repolist enabled

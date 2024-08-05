@@ -1,0 +1,8 @@
+---
+- name: "Gather facts about all Server Profiles"
+  hpe.oneview.oneview_server_profile_facts:
+    config: "{{ oneview_config_file }}"
+  delegate_to: localhost
+  when: oneview_config_file is defined
+
+- debug: var=server_profiles

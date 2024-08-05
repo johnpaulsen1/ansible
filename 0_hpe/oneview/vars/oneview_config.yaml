@@ -1,0 +1,8 @@
+---
+ip: x.x.x.x
+credentials:
+  userName: "{{ vault_ov_user }}"
+  password: "{{ vault_ov_password }}"
+  authLoginDomain: "{{ vault_ov_auth_domain }}"
+api_version: 5600
+variant: Synergy

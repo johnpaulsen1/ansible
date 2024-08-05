@@ -1,0 +1,19 @@
+exclude_packages: [
+'*puppet*',
+'*facter*',
+'*docker*',
+'*mysql*',
+'*sql*',
+'*postgres*',
+'*mongodb*',
+'*mariadb*',
+'*percona*',
+'*rabbitmq*',
+'*zabbix*',
+'*erlang*',
+'*java*',
+'*filebeat*',
+'*metricbeat*',
+'*kubernetes*',
+]
+expected_rhel7_kernel_version: "None"

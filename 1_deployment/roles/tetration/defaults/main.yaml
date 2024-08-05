@@ -1,0 +1,12 @@
+tetration_url: https://proxy_server_here/cobbler/pub/software/tet/
+tetration_latest_version: tet-sensor-3.4.1.28-1
+tetration_install_rpm: "{{ tetration_url }}{{ tetration_latest_version }}.el{{ ansible_distribution_major_version }}-fnb-tetration.enforcer.{{ ansible_architecture }}.rpm"
+tetration_version_file: /usr/local/tet/conf/version
+tetration_rpms:
+  - "tet-sensor"
+  - "tet-sensor-site"
+tetration_procs:
+  - "tet-engine"
+  - "tet-sensor"
+  - "tet-main"
+  - "tet-enforcer"

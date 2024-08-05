@@ -1,0 +1,26 @@
+# This file is being maintained by Ansible.
+# DO NOT EDIT
+# Contact The Linux team.
+
+{% if vlan == 'lan' %}
+{% for server in lan_servers %}
+SERVER = {{ server }}
+{% endfor %}
+EMMSERVER = {{ lan_vip }}
+{% elif vlan == 'dmz' %}
+{% for server in dmz_servers %}
+SERVER = {{ server }}
+{% endfor %}
+EMMSERVER = {{ dmz_vip }}
+{% elif vlan == 'pci' %}
+{% for server in pci_servers %}
+SERVER = {{ server }}
+{% endfor %}
+EMMSERVER = {{ pci_vip }}
+{% else %}
+# VLAN is not catered by Ansible.
+{% endif %}
+CLIENT_NAME = {{ client_name }}
+{% if ansible_architecture == 's390x' %}
+DB_SCRIPT_PATH = {{ db_script_path }}
+{% endif %}

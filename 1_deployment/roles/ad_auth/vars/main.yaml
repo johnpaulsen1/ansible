@@ -1,0 +1,6 @@
+filter_users: filter_user1
+filter_groups: filter_group1
+group_list: ad_group1, ad_group2
+ldap_default_bind_dn: ad_user
+ldap_default_authtok: not-today
+ldap_uri: ldaps://ldap_server1:636, ldaps://ldap_server2:636

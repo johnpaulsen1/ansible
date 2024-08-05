@@ -1,0 +1,94 @@
+---
+- name: "Set power_task_server_names_list param - default"
+  set_fact:
+    power_task_server_names_list: "{{ cci_hpe_servers[cci_cluster].keys() }}"
+  when: hardware_add_task_server_names is not defined
+
+- name: "Set power_task_server_names_list param - from status task"
+  set_fact:
+    power_task_server_names_list: "{{ hardware_add_task_server_names }}"
+  when: hardware_add_task_server_names is defined
+
+- name: "Task used to either power on or power off servers in cluster - {{ cci_cluster }}"
+  debug:
+    msg: "Powering server '{{ item }}' '{{ power_state }}'"
+  loop: "{{ power_task_server_names_list }}"
+  when:
+    - power_state is defined
+    - power_state != "None"
+
+- name: "Power {{ power_state }} server hardware - Async task"
+  hpe.oneview.oneview_server_hardware:
+    config: "{{ oneview_config_file }}"
+    state: power_state_set
+    data:
+      name: "{{ item }}"
+      powerStateData:
+        powerState: "{{ power_state }}"
+        powerControl: "{{ power_control }}"
+  async: 300  # 5 minutes
+  poll: 0   # fire and forget
+  loop: "{{ power_task_server_names_list }}"
+  register: power_server_hardware_task
+  when:
+    - add_servers_task
+    - oneview_config_file is defined
+  delegate_to: localhost
+
+- name: "Wait for async task/s (Power server/s {{ power_state }}) to complete"
+  async_status:
+    jid: "{{ item.ansible_job_id }}"
+  register: power_server_hardware_async_watch_task
+  until: power_server_hardware_async_watch_task.finished
+  retries: 100
+  delay: 5  # seconds
+  loop: "{{ power_server_hardware_task.results }}"
+  when:
+    - add_servers_task
+    - power_server_hardware_task.changed
+
+- name: "Clean up async files"
+  async_status:
+    jid: "{{ item.ansible_job_id }}"
+    mode: cleanup
+  loop: "{{ power_server_hardware_task.results }}"
+  when:
+    - add_servers_task
+    - add_server_hardware_async_watch_task is success
+
+- name: "Power {{ power_state }} ALL server hardware - Async task"
+  hpe.oneview.oneview_server_hardware:
+    config: "{{ oneview_config_file }}"
+    state: power_state_set
+    data:
+      name: "{{ item }}"
+      powerStateData:
+        powerState: "{{ power_state }}"
+        powerControl: "{{ power_control }}"
+  async: 300  # 5 minutes
+  poll: 0   # fire and forget
+  loop: "{{ power_task_server_names_list }}"
+  register: power_all_server_hardware_task
+  when: power_all
+  delegate_to: localhost
+
+- name: "Wait for async task/s (Power all server/s {{ power_state }}) to complete"
+  async_status:
+    jid: "{{ item.ansible_job_id }}"
+  register: power_all_servers_async_watch_task
+  until: power_all_servers_async_watch_task.finished
+  retries: 100
+  delay: 5  # seconds
+  loop: "{{ power_all_server_hardware_task.results }}"
+  when:
+    - power_all
+    - power_all_server_hardware_task.changed
+
+- name: "Clean up async files - all servers"
+  async_status:
+    jid: "{{ item.ansible_job_id }}"
+    mode: cleanup
+  loop: "{{ power_all_server_hardware_task.results }}"
+  when:
+    - power_all
+    - power_all_servers_async_watch_task is success

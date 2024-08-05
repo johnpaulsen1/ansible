@@ -1,0 +1,29 @@
+- name: dmz check in install
+  debug:
+    msg: "This is a check for DMZ"
+  when: vlan == "dmz"
+
+- name: create /var/tmp
+  file:
+    path: /var/tmp
+    state: directory
+    mode: '0755'
+
+- name: flexera DMZ Host response download
+  get_url:
+    url: "{{ flexera_dmz_response }}"
+    dest: /var/tmp/mgsft_rollout_response
+    mode: '0770'
+    validate_certs: false
+
+- name: flexera DMZ Host package download
+  get_url:
+    url: "{{ flexera_dmz }}"
+    dest: /var/tmp/managesoft.x86_64.rpm
+    mode: '0770'
+    validate_certs: false
+
+- name: flexera host package install
+  yum:
+    name: /var/tmp/managesoft.x86_64.rpm
+    state: present

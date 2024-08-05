@@ -1,0 +1,78 @@
+---
+- name: "Gather facts about Server Hardwares in cluster - {{ cci_cluster }}"
+  hpe.oneview.oneview_server_hardware_facts:
+    config: "{{ oneview_config_file }}"
+    name: "{{ server_name }}"
+  register: server_hardware_facts
+  loop: "{{ server_names }}"
+  loop_control:
+    loop_var: server_name
+  delegate_to: localhost
+  when:
+    - oneview_config_file is defined
+    - status_check
+
+- name: "Show server_hardware_facts param"
+  debug:
+    msg:
+      - "server_hardware_facts - {{ server_hardware_facts }}"
+  when: server_hardware_facts is defined
+
+- name: "Set server state dictionary fact"
+  set_fact:
+    server_state_dict: "{{ server_state_dict | default({}) | combine( {item.ansible_facts.server_hardwares.name: {'state': item.ansible_facts.server_hardwares.state}} ) }}"
+  when: server_hardware_facts.results is defined
+  loop: "{{ server_hardware_facts.results }}"
+
+- name: "Show server_state_dict param"
+  debug:
+    msg:
+      - "server_state_dict - {{ server_state_dict }}"
+  when: server_state_dict is defined
+
+- name: "check if server state is 'OK'"
+  debug:
+    msg:
+      - "item - {{ item }}"
+      - "server_state_dict[item] - {{ server_state_dict[item] }}"
+      - "Server '{{ item }}' state '{{ server_state_dict[item].state }}' is 'OK'"
+  loop: "{{ server_state_dict }}"
+  when:
+    - server_state_dict is defined
+    - server_state_dict[item].state in ok_server_states
+
+- name: "create server_state_dict_ok"
+  set_fact:
+    server_state_dict_ok: "{{ server_state_dict_ok | default({}) | combine( {item: {'state': server_state_dict[item].state}} ) }}"
+  loop: "{{ server_state_dict.keys() }}"
+  when:
+    - server_state_dict is defined
+    - server_state_dict[item].state in ok_server_states
+
+- name: "'Pop' keys from server_state_dict that have 'OK' state"
+  set_fact:
+    server_state_dict: "{{ server_state_dict | ansible.utils.remove_keys(target=[item]) }}"
+  loop: "{{ server_state_dict }}"
+  when:
+    - server_state_dict is defined
+    - server_state_dict[item].state in ok_server_states
+
+- name: "Show server_state_dict param"
+  debug:
+    msg:
+      - "server_state_dict - {{ server_state_dict }}"
+  when: server_state_dict is defined
+
+- name: "Set a 'sleep' of 5 minutes to give the server a chance to have it's state change to 'OK'"
+  command: "sleep 300"
+  when:
+    - server_state_dict is defined
+    - server_state_dict | length > 0
+
+- name: "Continue to monitor server state for servers whose state is not 'OK'"
+  include_tasks: monitor_server_state.yaml
+  vars:
+    server_names: "{{ server_state_dict.keys() }}"
+  when:
+    - server_state_dict is defined
+    - server_state_dict | length > 0

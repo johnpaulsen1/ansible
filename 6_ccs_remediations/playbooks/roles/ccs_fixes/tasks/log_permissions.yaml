@@ -1,0 +1,9 @@
+---
+# 4.2.4 Are permissions on all logfiles configured?
+# CCS is only worried files directly under /var/log. It doesn't go deeper.
+- name: correct log file permissions
+  command: "{{ item }}"
+  with_items:
+    - find "{{ the_path }}" -maxdepth 1 -type f ! -perm 0640 ! -perm 0600 -exec chmod 0640 {} \; 
+  register: changed_files
+  changed_when: false

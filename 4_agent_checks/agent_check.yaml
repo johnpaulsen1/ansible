@@ -1,0 +1,15 @@
+---
+
+- hosts: "{{ hosts | default('all') }}"
+  user: "{{ user }}"
+  become: true
+  become_user: root
+  gather_facts: true
+  ignore_errors: true
+  serial: 20
+
+  roles:
+     - { role: lan_or_dmz, tags: ['lan_or_dmz', 'flexera']}
+     - { role: flexera, tags: [ 'flexera'] }
+     - { role: splunk, tags: [ 'splunk'] }
+     - { role: rsyslog, tags: [ 'rsyslog'] }

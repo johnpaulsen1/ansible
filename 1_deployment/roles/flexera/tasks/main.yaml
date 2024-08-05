@@ -1,0 +1,27 @@
+- name: managesoft package installed?
+  shell: rpm -qa | grep managesoft
+  register: managesoft_result
+  ignore_errors: true
+
+- debug:
+    var: managesoft_result
+
+- set_fact:
+    is_latest: true
+    cacheable: yes
+  when: 
+    - managesoft_result.rc == 0 and managesoft_result.stdout_lines[0] == flexera_latest_version
+
+- set_fact:
+    is_latest: false
+    cacheable: yes
+  when: 
+    - (managesoft_result.rc == 1 or managesoft_result.stdout_lines[0] != flexera_latest_version) or (managesoft_result.rc == 0 and managesoft_result.stdout_lines[0] != flexera_latest_version)
+
+- debug:
+    var: is_latest
+
+- name: remove if older version found
+  include: remove.yaml
+  when:
+    - is_latest == false and ansible_architecture == "x86_64" and (ansible_distribution == "RedHat" or ansible_distribution == "CentOS")

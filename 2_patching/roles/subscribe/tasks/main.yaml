@@ -1,0 +1,37 @@
+---
+### This is to fix the katello-cert issue. Can be removed once patching is done
+- name: remove existing subs
+  shell: subscription-manager clean
+
+- name: kill any yum processes
+  shell: pkill -9 -f yum
+  ignore_errors: true
+
+- name: check for current subscriptions
+  shell: subscription-manager status | grep -m1 Overall | awk '{print $NF}'
+  register: status
+
+- debug:
+    var: status.stdout_lines[0]
+
+- name: set subscription fact
+  set_fact:
+    current: '{{ status.stdout_lines[0] }}'
+
+- name: remove existing subscription information
+  shell: subscription-manager clean 
+  when: current != 'Current'
+
+- name: uninstall old katello-ca-consumer-latest
+  yum:
+    name: katello-ca-consumer-*
+    state: absent
+  when: current != 'Current'
+
+- name: Test DMZ Host Connectivity
+  include: dmz_connectivity.yaml
+  when: current != 'Current' and (vlan == 'dmz' or vlan == 'pci')
+
+- name: Test LAN Host connectivity
+  include: lan_connectivity.yaml
+  when: current != 'Current' and vlan == 'lan'

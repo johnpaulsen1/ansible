@@ -1,0 +1,154 @@
+---
+- name: kill splunk if running
+  shell: "pkill -9 -f splunk"
+  register: killed_splunk
+  ignore_errors: true
+  when: splunk_running == true
+
+- name: download & install splunkforwarder
+  yum:
+    name: "{{ splunk_install_rpm }}"
+    state: present
+    disable_gpg_check: true
+  register: download_install_splunk
+  when: rpm_installed is failed or is_latest == false
+
+- name: set fact splunk_installed to true if download and install was successful
+  set_fact:
+    splunk_installed: true
+  when: download_install_splunk is success
+
+- name: download deployment archive
+  get_url:
+    url: "{{ splunk_url }}frg_all_deploymentclient.tar.gz"
+    dest: /opt/splunkforwarder/etc/apps/frg_all_deploymentclient.tar.gz
+    mode: '0700'
+  register: download_deploy_archive
+  ignore_errors: true
+  when: splunk_installed == true
+
+- name: "install libselinux-python is selinux error"
+  yum:
+    name: libselinux-python
+    state: present
+  when: "download_deploy_archive is failed and 'libselinux-python' in download_deploy_archive.msg"
+
+- name: download deployment archive - again
+  get_url:
+    url: "{{ splunk_url }}frg_all_deploymentclient.tar.gz"
+    dest: /opt/splunkforwarder/etc/apps/frg_all_deploymentclient.tar.gz
+    mode: '0700'
+  register: download_deploy_archive
+  when: splunk_installed == true and "download_deploy_archive is failed and 'libselinux-python' in download_deploy_archive.msg"
+
+- name: uncompress deployment archive
+  unarchive:
+    src: /opt/splunkforwarder/etc/apps/frg_all_deploymentclient.tar.gz
+    dest: /opt/splunkforwarder/etc/apps/
+    remote_src: yes
+  when: splunk_installed == true
+
+- name: change dir ownership
+  file:
+    path: /opt/splunkforwarder
+    owner: splunk
+    group: splunk
+    mode: '0775'
+    recurse: yes
+  when: splunk_installed == true
+
+- name: remove deployment archive
+  file:
+    path: /opt/splunkforwarder/etc/apps/frg_all_deploymentclient.tar.gz
+    state: absent
+  when: splunk_installed == true
+
+- name: download seed-file
+  get_url:
+    url: "{{ splunk_url }}seed-file.conf"
+    dest: /opt/splunkforwarder/etc/system/local/user-seed.conf
+    owner: 'splunk'
+    group: 'splunk'
+    mode: '0660'
+  when: splunk_installed == true
+
+- name: change ACLs
+  acl:
+    path: "{{ item }}"
+    entry: user:splunk:r-x
+    state: present
+  with_items:
+    - "/var/log"
+    - "/var/log/messages"
+    - "/var/log/secure"
+    - "/var/log/audit/"
+    - "/var/log/audit/audit.log"
+  when: splunk_installed == true
+  ignore_errors: true
+
+### Add polkit for authentication
+- name: polkit file
+  get_url:
+    url: "{{ splunk_url }}90-splunk.rules"
+    dest: /etc/polkit-1/rules.d/90-splunk.rules
+    owner: 'root'
+    group: 'root'
+  when: (splunk_installed == true) and (ansible_distribution == 'RedHat' or ansible_distribution == 'CentOS') and (ansible_distribution_major_version != '6')
+
+- name: polkit script
+  get_url:
+    url: "{{ splunk_url }}polkit_splunk"
+    dest: /usr/local/bin/polkit_splunk
+    owner: 'root'
+    group: 'root'
+    mode: '0755'
+  when: (splunk_installed == true) and (ansible_distribution == 'RedHat' or ansible_distribution == 'CentOS') and (ansible_distribution_major_version != '6')
+
+- name: "disable boot start"
+  shell: /opt/splunkforwarder/bin/splunk disable boot-start --accept-license --answer-yes --no-prompt
+  ignore_errors: true
+  when: splunk_installed == true
+
+# rhel / centos 7/8
+- name: "enable boot start - 7"
+  shell: /opt/splunkforwarder/bin/splunk enable boot-start --accept-license --answer-yes --no-prompt -systemd-managed 1 -user splunk
+  ignore_errors: true
+  when: (splunk_installed == true) and (ansible_distribution == 'RedHat' or ansible_distribution == 'CentOS') and (ansible_distribution_major_version != '6')
+
+- name: reload daemon
+  shell: systemctl daemon-reload
+  when: (splunk_installed == true) and (ansible_distribution == 'RedHat' or ansible_distribution == 'CentOS') and (ansible_distribution_major_version != '6')
+
+- name: "start splunk service - 7"
+  systemd:
+    state: started
+    name: SplunkForwarder
+  register: start_splunk_7
+  when: (splunk_installed == true) and (ansible_distribution == 'RedHat' or ansible_distribution == 'CentOS') and (ansible_distribution_major_version != '6')
+
+# rhel / centos 6
+- name: "enable boot start - 6"
+  shell: /opt/splunkforwarder/bin/splunk enable boot-start --accept-license --answer-yes --no-prompt -user splunk
+  register: enable_boot_6
+  when: (splunk_installed == true) and (ansible_distribution == 'RedHat' or ansible_distribution == 'CentOS') and (ansible_distribution_major_version == '6')
+  ignore_errors: true
+
+- name: change dir ownership
+  file:
+    path: /opt/splunkforwarder
+    owner: splunk
+    group: splunk
+    mode: '0775'
+    recurse: yes
+  when: splunk_installed == true
+
+- name: "enable splunk service to auto start on reboot"
+  service:
+    name: splunk
+    enabled: yes
+  ignore_errors: true
+  when: (splunk_installed == true) and (ansible_distribution == 'RedHat' or ansible_distribution == 'CentOS') and (ansible_distribution_major_version == '6')
+
+- name: "start splunk service - 6"
+  shell: "/opt/splunkforwarder/bin/splunk start"
+  when: (splunk_installed == true) and (ansible_distribution == 'RedHat' or ansible_distribution == 'CentOS') and (ansible_distribution_major_version == '6')

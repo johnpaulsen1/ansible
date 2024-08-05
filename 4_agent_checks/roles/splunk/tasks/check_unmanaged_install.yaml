@@ -1,0 +1,120 @@
+- name: check that splunk installed version file exists
+  stat:
+    path: "{{ splunk_installed_version_file_path }}"
+  register: splunk_installed_file
+  changed_when: false
+  ignore_errors: true
+
+- name: get major version fact
+  shell: "echo {{ splunk_latest_version }} | cut -d '-' -f2"
+  register: splunk_major_version
+  when: splunk_installed_file.stat.exists
+  changed_when: false
+  ignore_errors: true
+
+- name: get build version fact
+  shell: "echo {{ splunk_latest_version }} | cut -d '-' -f3"
+  register: splunk_build_version
+  when: splunk_installed_file.stat.exists
+  changed_when: false
+  ignore_errors: true
+
+- name: check that installed splunk major version is latest
+  shell: "grep VERSION={{ splunk_major_version.stdout }} {{ splunk_installed_version_file_path }}"
+  register: splunk_major_version_latest
+  when: splunk_installed_file.stat.exists
+  changed_when: false
+  ignore_errors: true
+
+- name: check that installed splunk build version is latest
+  shell: "grep BUILD={{ splunk_build_version.stdout }} {{ splunk_installed_version_file_path }}"
+  register: splunk_build_version_latest
+  when: splunk_installed_file.stat.exists
+  changed_when: false
+  ignore_errors: true
+
+- name: "set splunk installed fact"
+  set_fact:
+    splunk_installed_fact: true
+  when: splunk_installed_file.stat.exists
+
+- name: "set splunk latest installed fact"
+  set_fact:
+    splunk_latest_installed_fact: true
+  when: splunk_major_version_latest is success and splunk_build_version_latest is success
+
+- name: "check if splunk is running"
+  shell: /opt/splunkforwarder/bin/splunk status
+  register: splunk_running
+  ignore_errors: true
+  changed_when: false
+  when: splunk_installed_fact == true
+
+- name: "set splunk running fact"
+  set_fact:
+    splunk_running_fact: true
+  when: splunk_running is success
+
+- name: check that {{ splunk_user }} has access to OS logs '/var/log/messages'
+  acl:
+    path: "/var/log/messages"
+  register: acl_info_varlog_messages
+
+- name: "set splunk varlog_messages acl access fact"
+  set_fact:
+    splunk_varlog_messages_acl_access_fact: true
+  when: "splunk_user in acl_info_varlog_messages.acl[1]"
+
+- name: check that {{ splunk_user }} has access to OS logs '/var/log/secure'
+  acl:
+    path: "/var/log/secure"
+  register: acl_info_varlog_secure
+
+- name: "set splunk varlog_secure acl access fact"
+  set_fact:
+    splunk_varlog_secure_acl_access_fact: true
+  when: "splunk_user in acl_info_varlog_secure.acl[1]"
+
+- name: "splunk is running"
+  debug:
+    msg: "splunk is running on {{inventory_hostname}} , {{splunk_running.stdout}}"
+  when: splunk_installed_fact == true and splunk_running is success
+  ignore_errors: true
+
+- name: "{{ splunk_user }} has access to OS logs /var/log/messages"
+  debug:
+    msg: "splunk's access on /var/log/messages = {{ acl_info_varlog_messages.acl[1] }}"
+  when: splunk_varlog_messages_acl_access_fact == true
+  ignore_errors: true
+
+- name: "{{ splunk_user }} has access to OS logs /var/log/secure"
+  debug:
+    msg: "splunk's access on /var/log/secure = {{ acl_info_varlog_secure.acl[1] }}"
+  when: splunk_varlog_secure_acl_access_fact == true
+  ignore_errors: true
+
+- name: "splunk is NOT running"
+  debug:
+    msg: "splunk is NOT running on {{inventory_hostname}} , {{splunk_running.stdout}}"
+  when: splunk_installed_fact == true and splunk_running is failed
+  ignore_errors: true
+
+- name: "{{ splunk_user }} DOES NOT have access to OS logs /var/log/messages"
+  debug:
+    msg: "splunk DOES NOT have access to OS logs /var/log/messages"
+  when: splunk_varlog_messages_acl_access_fact == false
+  ignore_errors: true
+
+- name: "{{ splunk_user }} DOES NOT have access to OS logs /var/log/secure"
+  debug:
+    msg: "splunk DOES NOT have access to OS logs /var/log/secure"
+  when: splunk_varlog_secure_acl_access_fact == false
+  ignore_errors: true
+
+- name: "attempting to restart splunk"
+  shell: /opt/splunkforwarder/bin/splunk restart
+  register: splunk_restart
+  when: splunk_installed_fact == true and splunk_running is failed
+
+- name: print final results
+  include: result.yaml
